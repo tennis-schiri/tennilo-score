@@ -1,0 +1,51 @@
+name: TENNILO Score manuell veröffentlichen
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tennilo-score-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Prototyp per FTPS veröffentlichen
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Quellcode abrufen
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Prototyp prüfen
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s prototype/index.html
+          grep -iq '<!doctype html>' prototype/index.html
+
+      - name: Index-Datei sicher per FTPS übertragen
+        shell: bash
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_REMOTE_DIR: ${{ secrets.FTP_REMOTE_DIR }}
+        run: |
+          set -euo pipefail
+          : "${FTP_HOST:?Repository-Secret FTP_HOST fehlt}"
+          : "${FTP_USER:?Repository-Secret FTP_USER fehlt}"
+          : "${FTP_PASSWORD:?Repository-Secret FTP_PASSWORD fehlt}"
+          : "${FTP_REMOTE_DIR:?Repository-Secret FTP_REMOTE_DIR fehlt}"
+          [[ "$FTP_REMOTE_DIR" == /* ]] || { echo "::error::FTP_REMOTE_DIR muss mit / anfangen"; exit 1; }
+          [[ "$FTP_REMOTE_DIR" != *..* ]] || { echo "::error::Ungültiger FTP-Pfad"; exit 1; }
+          remote="${FTP_REMOTE_DIR%/}/index.html"
+          curl --fail --silent --show-error --ssl-reqd --ftp-pasv --ftp-create-dirs \
+            --user "${FTP_USER}:${FTP_PASSWORD}" \
+            --upload-file prototype/index.html \
+            "ftp://${FTP_HOST}:21${remote}"
+          echo "TENNILO Score erfolgreich übertragen."
