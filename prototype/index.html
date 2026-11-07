@@ -48,7 +48,7 @@ function nameOf(key){if(!key)return '–';const [t,i]=key.split(':').map(Number)
 function teamOf(key){return Number(key.split(':')[0])}
 function otherTeam(t){return 1-t}
 function initConfig(){config={mode:$('mode').value,mixed:$('mixed').value==='mixed',men:$('men').value.split(',').map(Number),sets:Number($('sets').value),games:Number($('games').value),deuce:$('deuce').value,finalset:$('finalset').value,tb:Number($('tiebreakTarget').value),names:[$('playerA').value.trim()||'Ich',$('playerB').value.trim()||'Gegner'],partners:[$('partnerA').value.trim()||'Partner',$('partnerB').value.trim()||'Gegner 2']}}
-function fresh(){state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:Number($('firstserve').value),tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0};undo=[];events=[];started=Date.now();if(config.mode==='double')requestSetup();render()}
+function fresh(){state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:Number($('firstserve').value),tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0]};undo=[];events=[];started=Date.now();if(config.mode==='double')requestSetup();render()}
 function note(msg){$('status').textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('status').textContent='',2600)}
 function snapshot(){undo.push({state:clone(state),events:clone(events)});if(undo.length>500)undo.shift()}
 function elapsed(){let n=Math.max(0,Math.floor((Date.now()-started)/1000));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
@@ -108,10 +108,51 @@ function chooseSetup(index){
  if(state.mtb&&state.setupCount===1){state.tbStart=0;state.tbFirstServer=team;/* Die zweite MTB-Aufstellung folgt erst nach Punkt 1. */}
  render();
 }
-function beginNewSet(){state.games=[0,0];state.points=[0,0];state.tb=false;state.mtb=false;state.tbStart=0;state.serveOrder=[];state.receiveDeuce=[null,null];state.setupCount=0;state.setupPending=false;if(config.finalset==='mtb'&&isFinal()){state.mtb=true;state.tb=true;event('Match-Tiebreak beginnt')}if(!state.finished&&config.mode==='double')requestSetup()}
+function beginNewSet(){state.games=[0,0];state.points=[0,0];state.deuceCount=0;state.setBallCount=[0,0];state.tb=false;state.mtb=false;state.tbStart=0;state.serveOrder=[];state.receiveDeuce=[null,null];state.setupCount=0;state.setupPending=false;if(config.finalset==='mtb'&&isFinal()){state.mtb=true;state.tb=true;event('Match-Tiebreak beginnt')}if(!state.finished&&config.mode==='double')requestSetup()}
 function setWinner(w,tbLoser=null){let wasMTB=state.mtb;state.completed.push(wasMTB?[...state.points]:[...state.games]);state.completedTB.push(wasMTB?'mtb':tbLoser);state.sets[w]++;if(state.sets[w]>=Math.floor(config.sets/2)+1){state.finished=true;state.winner=w;state.tb=false;state.mtb=false;event(person(w,0)+' gewinnt das Match')}else beginNewSet()}
-function gameWinner(w){const oldServer=servingTeam();state.games[w]++;state.points=[0,0];state.server=1-oldServer;state.sideChange=currentGame()%2===1;event('Spiel für '+config.names[w]);let target=config.games,a=state.games[w],b=state.games[1-w];if(a>=target&&a-b>=2){event('Satz für '+config.names[w]);setWinner(w)}else if(a===target&&b===target){state.tb=true;state.tbStart=currentGame()%4;state.tbFirstServer=oldServer===0?1:0;event('Tiebreak beginnt')}else if(config.mode==='double'&&state.setupCount<2)requestSetup()}
-function point(w){if(state.finished){note('Match bereits beendet');return}if(state.setupPending){note('Bitte zuerst die Aufstellung bestätigen');return}snapshot();state.sideChange=false;let p=state.points,other=1-w;state.pointCount++;if(state.tb){p[w]++;let target=state.mtb?10:config.tb;if(p[w]>=target&&p[w]-p[other]>=2){const loser=p[other];if(!state.mtb){state.games[w]++;state.server=1-state.tbFirstServer}event('Tiebreak für '+config.names[w]);setWinner(w,state.mtb?null:loser)}else if((p[0]+p[1])%6===0)state.sideChange=true}else if(config.deuce==='noad'){p[w]++;if(p[w]>=4)gameWinner(w)}else{if(p[w]===4)gameWinner(w);else if(p[w]===3&&p[other]===4)p[other]=3;else if(p[w]>=3&&p[other]<3)gameWinner(w);else if(p[w]===3&&p[other]===3)p[w]=4;else p[w]++}event('Punkt für '+config.names[w]);if(state.mtb&&config.mode==='double'&&!state.finished&&state.setupCount===1&&state.points[0]+state.points[1]===1){state.server=1-state.tbFirstServer;requestSetup()}render()}
+function gameWinner(w){state.deuceCount=0;const oldServer=servingTeam();state.games[w]++;state.points=[0,0];state.server=1-oldServer;state.sideChange=currentGame()%2===1;event('Spiel für '+config.names[w]);let target=config.games,a=state.games[w],b=state.games[1-w];if(a>=target&&a-b>=2){event('Satz für '+config.names[w]);setWinner(w)}else if(a===target&&b===target){state.tb=true;state.tbStart=currentGame()%4;state.tbFirstServer=oldServer===0?1:0;event('Tiebreak beginnt')}else if(config.mode==='double'&&state.setupCount<2)requestSetup()}
+// A set/match ball exists only when the NEXT point would actually finish the set.
+function gameWinsWithNextPoint(team){
+ const a=state.points[team],b=state.points[1-team];
+ if(config.deuce==='noad')return a>=3;
+ return a===4||(a===3&&b<3);
+}
+function setBallFor(team){
+ if(state.finished)return false;
+ const a=state.points[team],b=state.points[1-team];
+ if(state.tb){
+  const target=state.mtb?10:config.tb;
+  return a+1>=target&&a+1-b>=2;
+ }
+ if(!gameWinsWithNextPoint(team))return false;
+ const gamesAfter=state.games[team]+1,other=state.games[1-team];
+ return gamesAfter>=config.games&&gamesAfter-other>=2;
+}
+function matchBallFor(team){
+ return setBallFor(team)&&state.sets[team]+1>=Math.floor(config.sets/2)+1;
+}
+function phaseLabel(){
+ if(state.finished)return 'MATCH BEENDET';
+ if(state.setupPending)return 'AUFSTELLUNG FESTLEGEN';
+ const match=[0,1].filter(matchBallFor);
+ if(match.length)return 'MATCHBALL '+match.map(t=>'#'+(state.matchBallCount[t]+1)+(match.length===2?' · '+config.names[t]:'')).join(' / ');
+ const sets=[0,1].filter(setBallFor);
+ if(sets.length)return 'SATZBALL '+sets.map(t=>'#'+(state.setBallCount[t]+1)+(sets.length===2?' · '+config.names[t]:'')).join(' / ');
+ if(state.mtb)return 'MATCH-TIEBREAK';
+ if(state.tb)return 'TIEBREAK';
+ if(config.deuce==='noad'&&state.points.every(x=>x===3))return 'NO-AD · ENTSCHEIDUNGSPUNKT';
+ if(config.deuce!=='noad'&&state.points.every(x=>x===3))return state.deuceCount>1?'EINSTAND #'+state.deuceCount:'EINSTAND';
+ return 'SATZ '+(state.completed.length+1)+' · SPIEL '+(currentGame()+1);
+}
+function point(w){if(state.finished){note('Match bereits beendet');return}if(state.setupPending){note('Bitte zuerst die Aufstellung bestätigen');return}snapshot();state.sideChange=false;let p=state.points,other=1-w;
+ // Count each actual point played at set/match point, even when the chance is missed.
+ for(let t=0;t<2;t++)if(setBallFor(t)){
+  state.setBallCount[t]++;
+  if(matchBallFor(t))state.matchBallCount[t]++;
+ }
+ const beforeDeuce=config.deuce!=='noad'&&!state.tb&&p[0]===3&&p[1]===3;
+ state.pointCount++;if(state.tb){p[w]++;let target=state.mtb?10:config.tb;if(p[w]>=target&&p[w]-p[other]>=2){const loser=p[other];if(!state.mtb){state.games[w]++;state.server=1-state.tbFirstServer}event('Tiebreak für '+config.names[w]);setWinner(w,state.mtb?null:loser)}else if((p[0]+p[1])%6===0)state.sideChange=true}else if(config.deuce==='noad'){p[w]++;if(p[w]>=4)gameWinner(w)}else{if(p[w]===4)gameWinner(w);else if(p[w]===3&&p[other]===4)p[other]=3;else if(p[w]>=3&&p[other]<3)gameWinner(w);else if(p[w]===3&&p[other]===3)p[w]=4;else p[w]++}if(!state.tb&&!state.finished&&config.deuce!=='noad'&&state.points[0]===3&&state.points[1]===3&&!beforeDeuce)state.deuceCount++;
+ event('Punkt für '+config.names[w]);if(state.mtb&&config.mode==='double'&&!state.finished&&state.setupCount===1&&state.points[0]+state.points[1]===1){state.server=1-state.tbFirstServer;requestSetup()}render()}
 function displayPoints(){if(state.tb||(state.finished&&state.completedTB[state.completedTB.length-1]==='mtb'))return state.points.map(String);if(state.finished)return ['–','–'];let p=state.points;if(Math.max(...p)===4)return p.map(x=>x===4?'AD':x===3?'40':['0','15','30','40'][x]);return p.map(x=>['0','15','30','40'][Math.min(x,3)])}
 function scoreParts(){const parts=state.completed.map((set,i)=>({text:set.join(':')+(state.completedTB[i]==='mtb'?' (MTB)':Number.isInteger(state.completedTB[i])?' ('+state.completedTB[i]+')':''),kind:set[0]>set[1]?'won':'lost'}));if(!state.finished||!parts.length)parts.push({text:state.mtb?state.points.join(':')+' (MTB)':state.games.join(':'),kind:'current'});return parts}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -152,7 +193,7 @@ function render(){if(!state)return;renderSetup();let p=displayPoints(),server=se
  }else{
   $('nameA').textContent=config.names[0].toUpperCase();
   $('nameB').textContent=config.names[1].toUpperCase();
- }$('scoreA').textContent=p[0];$('scoreB').textContent=p[1];const side=serveSide(),serveLabel='🎾'+(side?' · '+side:'');$('serveA').textContent=config.mode==='double'?'':server===0&&!state.finished?serveLabel:' ';$('serveB').textContent=config.mode==='double'?'':server===1&&!state.finished?serveLabel:' ';$('sideHint').textContent=state.sideChange&&!state.finished?'↔ SEITENWECHSEL':'';$('matchphase').classList.toggle('no-ad',noAd);$('matchphase').textContent=noAd?'NO-AD · ENTSCHEIDUNGSPUNKT':state.finished?'MATCH BEENDET':state.setupPending?'AUFSTELLUNG FESTLEGEN':state.mtb?'MATCH-TIEBREAK':state.tb?'TIEBREAK':'SATZ '+(state.completed.length+1)+' · SPIEL '+(currentGame()+1);$('setline').innerHTML=coloredScoreline();$('clock').textContent=elapsed();$('phoneMatch').textContent=config.names.join(' – ');$('phoneSets').innerHTML=coloredScoreline();$('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();$('historyList').innerHTML=events.length?events.slice(0,90).map(e=>'<div class="entry">'+esc(e.msg)+'<small>'+esc(e.time)+'</small></div>').join(''):'<p>Noch keine Punkte eingetragen.</p>'}
+ }$('scoreA').textContent=p[0];$('scoreB').textContent=p[1];const side=serveSide(),serveLabel='🎾'+(side?' · '+side:'');$('serveA').textContent=config.mode==='double'?'':server===0&&!state.finished?serveLabel:' ';$('serveB').textContent=config.mode==='double'?'':server===1&&!state.finished?serveLabel:' ';$('sideHint').textContent=state.sideChange&&!state.finished?'↔ SEITENWECHSEL':'';$('matchphase').classList.toggle('no-ad',noAd);$('matchphase').textContent=phaseLabel();$('setline').innerHTML=coloredScoreline();$('clock').textContent=elapsed();$('phoneMatch').textContent=config.names.join(' – ');$('phoneSets').innerHTML=coloredScoreline();$('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();$('historyList').innerHTML=events.length?events.slice(0,90).map(e=>'<div class="entry">'+esc(e.msg)+'<small>'+esc(e.time)+'</small></div>').join(''):'<p>Noch keine Punkte eingetragen.</p>'}
 function undoAction(){if(!undo.length){note('Nichts zum Rückgängigmachen');return}let x=undo.pop();state=x.state;events=x.events;if(state.setupPending){state.setupPending=false;requestSetup()}render();note('Letzter Punkt rückgängig')}
 function switchTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t))}
 function modeFields(){let d=$('mode').value==='double';$('doublePlayers').classList.toggle('hidden',!d);$('serverPersonField').classList.add('hidden');$('mixedFields').classList.toggle('hidden',!d);$('men').disabled=$('mixed').value!=='mixed'}
