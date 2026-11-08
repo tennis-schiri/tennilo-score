@@ -1,0 +1,22 @@
+name: TenniloScoreNative
+options:
+  bundleIdPrefix: de.tennilo
+settings:
+  base:
+    SWIFT_VERSION: '5.9'
+targets:
+  TenniloScoreWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: '10.0'
+    sources:
+      - path: Sources/ScoreCore
+      - path: Sources/ScoreWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.tennilo.score.watch
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_WKApplication: YES
+        INFOPLIST_KEY_WKWatchOnly: YES
+        TARGETED_DEVICE_FAMILY: '4'
+        CODE_SIGN_STYLE: Automatic
