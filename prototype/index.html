@@ -88,7 +88,7 @@ function historyGameCard(g){
   const d=e.details;
   const label=d.gameEnd?(d.setEnd?(d.matchEnd?'MATCH ':'SATZ '):d.tb?'TIEBREAK ':d.serverTeam!==d.pointWinner?'BREAK ':'SPIEL ')+(d.mtb?d.afterPoints.join(':'):d.gameScoreAfter.join(':')):d.afterPoints.join(':');
   const flags=d.warnings.filter(w=>/BREAKBALL|SATZBALL|MATCHBALL/.test(w));
-  return '<span class="history-token '+(d.gameEnd?'history-token-end':'')+'">'+esc(label)+flags.map(v=>'<b class="history-token-flag">'+esc(v.startsWith('BREAKBALL')?'BB':v.startsWith('MATCHBALL')?'MB':'SB')+'</b>').join('')+'</span>';
+  return '<span class="history-token '+(d.gameEnd?'history-token-end':'')+'" title="'+esc('Punkt für '+config.names[d.pointWinner]+' · Aufschlag: '+d.server+' · Return: '+d.receiver)+'">'+esc(label)+flags.map(v=>'<b class="history-token-flag">'+esc(v.startsWith('BREAKBALL')?'BB':v.startsWith('MATCHBALL')?'MB':'SB')+'</b>').join('')+'</span>';
  }).join('');
  const changes=g.points.filter(e=>e.details.sideChange).length;
  const extra=(isBreak?historyBadge('BREAK · '+config.names[final.pointWinner],'break'):'')+
@@ -229,6 +229,7 @@ function point(w){if(state.finished){note('Match bereits beendet');return}if(sta
  context.pointWinner=w;
  context.gameScoreAfter=[...state.games];
  context.setEnd=state.completed.length>context.setIndex;
+ if(context.setEnd&&!context.mtb)context.gameScoreAfter=[...state.completed[state.completed.length-1]];
  context.matchEnd=state.finished;
  context.gameEnd=context.setEnd||context.matchEnd||state.games.join(':')!==context.gameScoreBefore.join(':');
  context.afterPoints=context.tb?(context.setEnd?[...state.completed[state.completed.length-1]]:[...state.points]):context.gameEnd?[]:displayPoints();
@@ -285,7 +286,7 @@ function render(){if(!state)return;renderSetup();let p=displayPoints(),server=se
   $('nameB').textContent=config.names[1].toUpperCase();
  }$('scoreA').textContent=p[0];$('scoreB').textContent=p[1];const side=serveSide(),serveLabel='🎾'+(side?' · '+side:'');$('serveA').textContent=config.mode==='double'?'':server===0&&!state.finished?serveLabel:' ';$('serveB').textContent=config.mode==='double'?'':server===1&&!state.finished?serveLabel:' ';$('sideHint').textContent=state.sideChange&&!state.finished?'↔ SEITENWECHSEL':'';const phase=phaseLabel(),phaseEl=$('matchphase');
  phaseEl.textContent=phase;
- phaseEl.className=phase.startsWith('MATCHBALL')?'phase-alert phase-matchball':phase.startsWith('SATZBALL')?'phase-alert phase-setball':phase.startsWith('EINSTAND')?'phase-alert phase-deuce':phase.startsWith('NO-AD')?'phase-alert phase-noad':'phase-default';$('setline').innerHTML=coloredScoreline();$('clock').textContent=elapsed();$('phoneMatch').textContent=config.names.join(' – ');$('phoneSets').innerHTML=coloredScoreline();$('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();$('historyList').innerHTML=events.length?'':'';renderHistory()}
+ phaseEl.className=phase.startsWith('MATCHBALL')?'phase-alert phase-matchball':phase.startsWith('SATZBALL')?'phase-alert phase-setball':phase.startsWith('EINSTAND')?'phase-alert phase-deuce':phase.startsWith('NO-AD')?'phase-alert phase-noad':'phase-default';$('setline').innerHTML=coloredScoreline();$('clock').textContent=elapsed();$('phoneMatch').textContent=config.names.join(' – ');$('phoneSets').innerHTML=coloredScoreline();$('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();renderHistory()}
 $('historySetTabs').addEventListener('click',e=>{const b=e.target.closest('[data-history-set]');if(!b)return;selectedHistorySet=Number(b.dataset.historySet);renderHistory()});
 function undoAction(){if(!undo.length){note('Nichts zum Rückgängigmachen');return}let x=undo.pop();state=x.state;events=x.events;if(state.setupPending){state.setupPending=false;requestSetup()}render();note('Letzter Punkt rückgängig')}
 function switchTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t))}
