@@ -42,7 +42,7 @@
  .watch-head #matchphase.phase-matchball{box-shadow:inset 0 0 0 1px #ffdb71}
  .watch-head #matchphase.phase-deuce{box-shadow:none}
  
-.watch-rest-overlay{position:absolute;inset:0;z-index:6;background:linear-gradient(155deg,#14273a 0%,#0a1725 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:18px;pointer-events:none}
+.watch-rest-overlay{position:absolute;inset:0;z-index:6;background:linear-gradient(155deg,#14273a 0%,#0a1725 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:18px;pointer-events:auto;touch-action:manipulation;cursor:default}
 .watch-rest-overlay>div{font-size:19px;line-height:1.17;color:#bce7ff;font-weight:950;letter-spacing:.06em;max-width:100%;overflow-wrap:anywhere}
 .watch-rest-overlay strong{font-size:51px;line-height:1;font-weight:950;color:#f4faff;font-variant-numeric:tabular-nums}
 .watch-rest-overlay small{font-size:11px;color:#8db9d1;font-weight:750;text-transform:uppercase;letter-spacing:.11em}
@@ -371,7 +371,7 @@ function phaseLabel(){
  return 'SATZ '+(state.completed.length+1)+' · SPIEL '+(currentGame()+1);
 }
 function tbChangeEnds(pointNumber){return config.tbEnds==='144'?(pointNumber>=1&&(pointNumber-1)%4===0):pointNumber>0&&pointNumber%6===0}
-function point(w){if(state.finished){note('Match bereits beendet');return}if(state.awaitingServe){note('Bitte zuerst den ersten Aufschläger auswählen');return}if(state.setupPending){note('Bitte zuerst die Aufstellung bestätigen');return}snapshot();state.rest=null;clearTimeout(restBannerTimer);const context=pointContext();state.sideChange=false;let p=state.points,other=1-w;
+function point(w){if(state.rest&&Date.now()<state.rest.largeUntil)return;if(state.finished){note('Match bereits beendet');return}if(state.awaitingServe){note('Bitte zuerst den ersten Aufschläger auswählen');return}if(state.setupPending){note('Bitte zuerst die Aufstellung bestätigen');return}snapshot();state.rest=null;clearTimeout(restBannerTimer);const context=pointContext();state.sideChange=false;let p=state.points,other=1-w;
  // Count each actual point played at set/match point, even when the chance is missed.
  for(let t=0;t<2;t++)if(setBallFor(t)){
   state.setBallCount[t]++;
