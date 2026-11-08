@@ -186,8 +186,7 @@
 <div class="controls"><button class="btn" id="undo">↶ Rückgängig</button><button class="btn" id="correct">✎ Korrigieren</button><button class="btn" id="swapServe">⇄ Aufschlag</button><button class="btn danger" id="reset">Neues Match</button></div><div class="status" id="status"></div><div class="help">Simulation der Watch-Bedienung im Browser. Kein echtes WatchOS.</div></section>
 <section class="panel"><h2>iPhone-Vorschau</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="device-tabs"><button class="tab active" data-tab="settings">Einstellungen</button><button class="tab" data-tab="match">Match</button><button class="tab" data-tab="history">Verlauf</button></div><div class="phone"><div class="phone-top">TENNILO SCORE</div>
 <div class="view" id="view-settings"><h3>Match konfigurieren</h3>
-<div class="config-section"><div class="field"><label for="mode">Spielart</label><select id="mode"><option value="single">Einzel</option><option value="double" selected>Doppel</option></select></div>
-<div class="field" id="mixedFields"><label for="mixed">Doppelart</label><select id="mixed"><option value="normal">Doppel</option><option value="mixed">Mixed</option></select></div></div>
+<div class="config-section"><div class="field"><label for="mode">Spielart</label><select id="mode"><option value="single">Einzel</option><option value="double" selected>Doppel</option><option value="mixed">Mixed</option></select></div></div>
 <div class="config-section"><div class="config-section-title">Spieler / Teams</div><div class="two"><div class="field"><label for="playerA">Spieler A</label><div class="name-gender"><input id="playerA" value="Ich" maxlength="18"><div class="gender-choice hidden" data-gender-for="playerA"><span>M/W</span><select id="genderplayerA" aria-label="Geschlecht Spieler A"><option value="m" selected>M</option><option value="w">W</option></select></div></div></div><div class="field"><label for="playerB">Spieler B</label><div class="name-gender"><input id="playerB" value="Gegner" maxlength="18"><div class="gender-choice hidden" data-gender-for="playerB"><span>M/W</span><select id="genderplayerB" aria-label="Geschlecht Spieler B"><option value="m" selected>M</option><option value="w">W</option></select></div></div></div></div>
 <div class="two" id="doublePlayers"><div class="field"><label for="partnerA">Partner A</label><div class="name-gender"><input id="partnerA" value="Partner" maxlength="18"><div class="gender-choice hidden" data-gender-for="partnerA"><span>M/W</span><select id="genderpartnerA" aria-label="Geschlecht Partner A"><option value="m">M</option><option value="w" selected>W</option></select></div></div></div><div class="field"><label for="partnerB">Partner B</label><div class="name-gender"><input id="partnerB" value="Gegner 2" maxlength="18"><div class="gender-choice hidden" data-gender-for="partnerB"><span>M/W</span><select id="genderpartnerB" aria-label="Geschlecht Partner B"><option value="m">M</option><option value="w" selected>W</option></select></div></div></div></div>
 <p class="note hidden" id="mixedGenderNote">Für ein Mixed je Team einen Mann und eine Frau auswählen.</p></div>
@@ -213,7 +212,7 @@ function playerKey(t,i){return t+':'+i}
 function nameOf(key){if(!key)return '–';const [t,i]=key.split(':').map(Number);return person(t,i)}
 function teamOf(key){return Number(key.split(':')[0])}
 function otherTeam(t){return 1-t}
-function initConfig(){config={mode:$('mode').value,mixed:$('mixed').value==='mixed',men:[$('genderplayerA').value==='m'?0:1,$('genderplayerB').value==='m'?0:1],sets:Number($('sets').value),games:Number($('games').value),deuce:$('deuce').value,finalset:$('finalset').value,tb:Number($('tiebreakTarget').value),tbEnds:$('tbEnds').value,names:[$('playerA').value.trim()||'Ich',$('playerB').value.trim()||'Gegner'],partners:[$('partnerA').value.trim()||'Partner',$('partnerB').value.trim()||'Gegner 2']}}
+function initConfig(){config={mode:$('mode').value==='single'?'single':'double',mixed:$('mode').value==='mixed',men:[$('genderplayerA').value==='m'?0:1,$('genderplayerB').value==='m'?0:1],sets:Number($('sets').value),games:Number($('games').value),deuce:$('deuce').value,finalset:$('finalset').value,tb:Number($('tiebreakTarget').value),tbEnds:$('tbEnds').value,names:[$('playerA').value.trim()||'Ich',$('playerB').value.trim()||'Gegner'],partners:[$('partnerA').value.trim()||'Partner',$('partnerB').value.trim()||'Gegner 2']}}
 function fresh(){state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:0,awaitingServe:true,tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0],rest:null,setStartedAt:null,setDurations:[],matchEndedAt:null,finishDismissed:false,decisionBanner:null};clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);undo=[];events=[];selectedHistorySet=null;started=Date.now();render()}
 function chooseFirstServe(team){
  if(!state||!state.awaitingServe)return;
@@ -661,8 +660,7 @@ $('firstServeA').addEventListener('click',()=>chooseFirstServe(0));$('firstServe
 function undoAction(){if(!undo.length){note('Nichts zum Rückgängigmachen');return}let x=undo.pop();state=x.state;events=x.events;clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);if(state.decisionBanner&&Date.now()<state.decisionBanner.largeUntil)decisionBannerTimer=setTimeout(renderDecisionBanner,state.decisionBanner.largeUntil-Date.now()+100);if(state.rest&&Date.now()<state.rest.largeUntil)restBannerTimer=setTimeout(renderRest,state.rest.largeUntil-Date.now()+100);if(state.setupPending){state.setupPending=false;requestSetup()}render();note('Letzter Punkt rückgängig')}
 function switchTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t))}
 function modeFields(){
- const doubles=$('mode').value==='double',mixed=doubles&&$('mixed').value==='mixed';
- $('mixedFields').classList.toggle('hidden',!doubles);
+ const doubles=$('mode').value!=='single',mixed=$('mode').value==='mixed';
  $('doublePlayers').classList.toggle('hidden',!doubles);
  $('finalsetField').classList.toggle('hidden',Number($('sets').value)===1);
  $('mixedGenderNote').classList.toggle('hidden',!mixed);
@@ -671,14 +669,13 @@ function modeFields(){
  document.querySelector('label[for="playerB"]').textContent=doubles?'Spieler B · Team B':'Spieler B';
 }
 function validMixedPlayers(){
- if($('mode').value!=='double'||$('mixed').value!=='mixed')return true;
+ if($('mode').value!=='mixed')return true;
  if($('genderplayerA').value===$('genderpartnerA').value||$('genderplayerB').value===$('genderpartnerB').value){
   note('Beim Mixed muss jedes Team aus M und W bestehen.');switchTab('settings');return false;
  }
  return true;
 }
 $('mode').addEventListener('change',modeFields);
-$('mixed').addEventListener('change',modeFields);
 $('sets').addEventListener('change',modeFields);
 modeFields();document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));$('pointA').addEventListener('click',()=>point(0));$('pointB').addEventListener('click',()=>point(1));$('undo').addEventListener('click',undoAction);$('watchUndo').addEventListener('click',undoAction);$('phoneUndo').addEventListener('click',undoAction);$('setupChoice0').addEventListener('click',()=>chooseSetup(0));$('setupChoice1').addEventListener('click',()=>chooseSetup(1));$('setupBack').addEventListener('click',()=>{setupStage='server';renderSetup()});
 $('apply').addEventListener('click',()=>{if(!validMixedPlayers())return;if(state.pointCount&&!confirm('Laufendes Match verwerfen?'))return;initConfig();fresh();switchTab('match')});$('reset').addEventListener('click',()=>{if(state.pointCount&&!confirm('Neues Match starten?'))return;fresh()});$('swapServe').addEventListener('click',()=>{if(config.mode==='double'){note('Doppel-Aufschlag bitte über die Satzaufstellung festlegen');return}snapshot();state.server=1-state.server;event('Aufschlag gewechselt');render()});
