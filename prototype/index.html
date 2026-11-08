@@ -104,7 +104,7 @@ function historyGameCard(g){
 }
 function renderHistory(){
  const entries=events.filter(e=>e.details&&Number.isInteger(e.details.setIndex)).reverse();
- const current=state.completed.length;
+ const current=state.finished?Math.max(0,state.completed.length-1):state.completed.length;
  const count=Math.max(current+1,...entries.map(e=>e.details.setIndex+1));
  const active=selectedHistorySet===null?current:Math.min(selectedHistorySet,count-1);
  $('historySetTabs').innerHTML=Array.from({length:count},(_,i)=>
