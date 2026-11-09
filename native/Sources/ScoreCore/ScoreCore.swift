@@ -23,6 +23,7 @@ public struct MatchRules: Codable, Equatable {
     public var setsToWin: Int { bestOfSets / 2 + 1 }
 }
 
+public enum MatchKind: String, Codable, CaseIterable { case single, double, mixed }
 public enum MatchPhase: String, Codable { case game, tiebreak, matchTiebreak }
 public enum MatchNotice: String, Codable {
     case changeEnds, setBreak, changeEndsAndSetBreak, decidingPoint, matchFinished
@@ -158,14 +159,23 @@ public struct MatchSession: Codable, Equatable {
     public var match: MatchState
     public private(set) var undoHistory: [MatchState] = []
     public var playerNames: [String]
+    public var matchKind: MatchKind = .single
+    public var partnerNames: [String] = ["", ""]
+    /// A, partner A, B, partner B; "m" / "w" for mixed doubles.
+    public var playerGenders: [String] = ["m", "w", "m", "w"]
     public var finishedBannerDismissed: Bool = false
     public var startedAt: Date
     public var finishedAt: Date?
 
     public init(rules: MatchRules = MatchRules(), names: [String] = ["ICH", "GEGNER"],
-                firstServer: Side = .a, startedAt: Date = Date()) {
+                firstServer: Side = .a, startedAt: Date = Date(),
+                matchKind: MatchKind = .single, partners: [String] = ["", ""],
+                genders: [String] = ["m", "w", "m", "w"]) {
         match = MatchState(rules: rules, firstServer: firstServer)
         playerNames = names
+        partnerNames = partners
+        playerGenders = genders
+        self.matchKind = matchKind
         self.startedAt = startedAt
     }
 
