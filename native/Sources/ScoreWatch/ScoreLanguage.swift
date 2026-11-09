@@ -22,6 +22,8 @@ enum ScoreText {
     case bestOfSets, bestOfThree, oneSet, bestOfFive, gamesPerSet
     case tieBreakTo, advantage, noAd, decidingMTB, genders, genderMismatch
     case configureWithoutPhone, resumeMatch, scoreLabel
+    case setupStep, setupTapToContinue, setupReview, setupNameHint, setupMixedHint
+    case setupMale, setupFemale, setupYes, setupNo, setupNext, setupBack
 }
 
 struct ScoreCopy {
@@ -84,6 +86,17 @@ struct ScoreCopy {
         case .configureWithoutPhone: return english ? "Set up on your Watch" : "Direkt auf der Watch einstellen"
         case .resumeMatch: return english ? "Back to match" : "Zurück zum Match"
         case .scoreLabel: return english ? "SCORE" : "SCORE"
+        case .setupStep: return english ? "Step" : "Schritt"
+        case .setupTapToContinue: return english ? "Tap an option to continue" : "Auswahl antippen – weiter"
+        case .setupReview: return english ? "Review match" : "Match prüfen"
+        case .setupNameHint: return english ? "Tap to enter a name, or keep the suggestion." : "Namen antippen oder Vorschlag übernehmen."
+        case .setupMixedHint: return english ? "Partner is set to the opposite gender." : "Partner wird automatisch gegenteilig gesetzt."
+        case .setupMale: return english ? "Male" : "Männlich"
+        case .setupFemale: return english ? "Female" : "Weiblich"
+        case .setupYes: return english ? "Yes" : "Ja"
+        case .setupNo: return english ? "No" : "Nein"
+        case .setupNext: return english ? "Next" : "Weiter"
+        case .setupBack: return english ? "Back" : "Zurück"
         }
     }
 }
