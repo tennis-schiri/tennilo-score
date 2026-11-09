@@ -25,6 +25,27 @@ struct WatchMatchConfiguration: View {
     @State private var decidingMTB: Bool
     @State private var firstServer: Int
     @State private var invalidMixed: Bool = false
+    @State private var step: SetupStep = .matchType
+
+    private enum SetupStep: Equatable {
+        case matchType, playerA, partnerA, mixedA, playerB, partnerB, mixedB
+        case sets, games, tiebreak, noAd, decidingMTB, firstServer, summary
+    }
+
+    private let accent = Color(red: 0.75, green: 0.96, blue: 0.42)
+    private var steps: [SetupStep] {
+        var result: [SetupStep] = [.matchType, .playerA]
+        if kind != .single { result.append(.partnerA) }
+        if kind == .mixed { result.append(.mixedA) }
+        result.append(.playerB)
+        if kind != .single { result.append(.partnerB) }
+        if kind == .mixed { result.append(.mixedB) }
+        result += [.sets, .games, .tiebreak, .noAd]
+        if bestOfSets > 1 { result.append(.decidingMTB) }
+        result += [.firstServer, .summary]
+        return result
+    }
+    private var stepIndex: Int { steps.firstIndex(of: step) ?? 0 }
 
     private var copy: ScoreCopy { ScoreCopy(code: languageCode) }
 
@@ -54,89 +75,264 @@ struct WatchMatchConfiguration: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
-                HStack(spacing: 6) {
-                    Text(copy.text(.configure))
-                        .font(.system(size: 15, weight: .heavy))
-                        .lineLimit(2)
+                HStack(alignment: .center, spacing: 5) {
+                    Text("\(copy.text(.setupStep)) \(stepIndex + 1)/\(steps.count)")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
                     Spacer(minLength: 2)
                     Button(languageCode.uppercased()) {
                         languageCode = languageCode == "de" ? "en" : "de"
                     }
-                    .font(.system(size: 10, weight: .bold))
                     .buttonStyle(.bordered)
+                    .font(.system(size: 10, weight: .bold))
                     .accessibilityLabel(copy.text(.changeLanguage))
                 }
-                Text(copy.text(.configureWithoutPhone))
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
 
-                Picker(copy.text(.matchType), selection: $kind) {
-                    Text(copy.text(.singles)).tag(MatchKind.single)
-                    Text(copy.text(.doubles)).tag(MatchKind.double)
-                    Text(copy.text(.mixed)).tag(MatchKind.mixed)
+                ProgressView(value: Double(stepIndex + 1), total: Double(steps.count))
+                    .tint(accent)
+
+                Text(stepTitle)
+                    .font(.system(size: 17, weight: .heavy))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                stepContent
+
+                if step != .summary && !isNameStep {
+                    Text(copy.text(.setupTapToContinue))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
 
-                TextField(copy.text(.playerA), text: $nameA)
-                TextField(copy.text(.playerB), text: $nameB)
-                if kind != .single {
-                    TextField(copy.text(.partnerA), text: $partnerA)
-                    TextField(copy.text(.partnerB), text: $partnerB)
-                }
-                if kind == .mixed {
-                    genderPicker(copy.text(.playerA), selection: $genderA)
-                    genderPicker(copy.text(.partnerA), selection: $genderPartnerA)
-                    genderPicker(copy.text(.playerB), selection: $genderB)
-                    genderPicker(copy.text(.partnerB), selection: $genderPartnerB)
-                    if invalidMixed {
-                        Text(copy.text(.genderMismatch))
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.red)
-                    }
-                }
-                Picker(copy.text(.bestOfSets), selection: $bestOfSets) {
-                    Text(copy.text(.oneSet)).tag(1)
-                    Text(copy.text(.bestOfThree)).tag(3)
-                    Text(copy.text(.bestOfFive)).tag(5)
-                }
-                Picker(copy.text(.gamesPerSet), selection: $gamesPerSet) {
-                    Text("4").tag(4)
-                    Text("6").tag(6)
-                }
-                Picker(copy.text(.tieBreakTo), selection: $tiebreakTo) {
-                    Text("7").tag(7)
-                    Text("10").tag(10)
-                }
-                Toggle(copy.text(.noAd), isOn: $noAd)
-                if bestOfSets > 1 {
-                    Toggle(copy.text(.decidingMTB), isOn: $decidingMTB)
-                }
-                Picker(copy.text(.firstServer), selection: $firstServer) {
-                    Text(nameA.isEmpty ? copy.text(.playerA) : nameA).tag(0)
-                    Text(nameB.isEmpty ? copy.text(.playerB) : nameB).tag(1)
-                }
-                Button(action: startMatch) {
-                    Text(copy.text(.startMatch))
-                        .font(.system(size: 12, weight: .black))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color(red: 0.75, green: 0.96, blue: 0.42))
-                if canResume {
-                    Button(copy.text(.resumeMatch), action: onResume)
-                        .buttonStyle(.bordered)
-                        .font(.system(size: 11))
-                }
+                navigation
             }
-            .padding(.horizontal, 5)
-            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
         }
     }
 
-    private func genderPicker(_ label: String, selection: Binding<String>) -> some View {
-        Picker(label + " · M/W", selection: selection) {
-            Text("M").tag("m")
-            Text("W").tag("w")
+    private var stepTitle: String {
+        switch step {
+        case .matchType: return copy.text(.matchType)
+        case .playerA: return copy.text(.playerA)
+        case .partnerA: return copy.text(.partnerA)
+        case .mixedA: return "\(copy.text(.playerA)) · \(copy.text(.genders))"
+        case .playerB: return copy.text(.playerB)
+        case .partnerB: return copy.text(.partnerB)
+        case .mixedB: return "\(copy.text(.playerB)) · \(copy.text(.genders))"
+        case .sets: return copy.text(.bestOfSets)
+        case .games: return copy.text(.gamesPerSet)
+        case .tiebreak: return copy.text(.tieBreakTo)
+        case .noAd: return copy.text(.noAd)
+        case .decidingMTB: return copy.text(.decidingMTB)
+        case .firstServer: return copy.text(.firstServer)
+        case .summary: return copy.text(.setupReview)
         }
+    }
+
+    private var isNameStep: Bool {
+        switch step {
+        case .playerA, .partnerA, .playerB, .partnerB: return true
+        default: return false
+        }
+    }
+
+    @ViewBuilder private var stepContent: some View {
+        switch step {
+        case .matchType:
+            option(copy.text(.singles), selected: kind == .single) { kind = .single }
+            option(copy.text(.doubles), selected: kind == .double) { kind = .double }
+            option(copy.text(.mixed), selected: kind == .mixed) { kind = .mixed }
+        case .playerA:
+            nameField(copy.text(.playerA), value: $nameA)
+        case .partnerA:
+            nameField(copy.text(.partnerA), value: $partnerA)
+        case .mixedA:
+            genderOptions(for: $genderA, partner: $genderPartnerA)
+        case .playerB:
+            nameField(copy.text(.playerB), value: $nameB)
+        case .partnerB:
+            nameField(copy.text(.partnerB), value: $partnerB)
+        case .mixedB:
+            genderOptions(for: $genderB, partner: $genderPartnerB)
+        case .sets:
+            option(copy.text(.oneSet), selected: bestOfSets == 1) { bestOfSets = 1 }
+            option(copy.text(.bestOfThree), selected: bestOfSets == 3) { bestOfSets = 3 }
+            option(copy.text(.bestOfFive), selected: bestOfSets == 5) { bestOfSets = 5 }
+        case .games:
+            option("4", selected: gamesPerSet == 4) { gamesPerSet = 4 }
+            option("6", selected: gamesPerSet == 6) { gamesPerSet = 6 }
+        case .tiebreak:
+            option("7", selected: tiebreakTo == 7) { tiebreakTo = 7 }
+            option("10", selected: tiebreakTo == 10) { tiebreakTo = 10 }
+        case .noAd:
+            option(copy.text(.setupNo), selected: !noAd) { noAd = false }
+            option(copy.text(.setupYes), selected: noAd) { noAd = true }
+        case .decidingMTB:
+            option(copy.text(.setupYes), selected: decidingMTB) { decidingMTB = true }
+            option(copy.text(.setupNo), selected: !decidingMTB) { decidingMTB = false }
+        case .firstServer:
+            option(serverLabel(0), selected: firstServer == 0) { firstServer = 0 }
+            option(serverLabel(1), selected: firstServer == 1) { firstServer = 1 }
+        case .summary:
+            VStack(spacing: 7) {
+                summaryRow(copy.text(.matchType), matchKindLabel)
+                summaryRow(copy.text(.playerA), display(nameA, fallback: copy.text(.me)) + partnerSummary(partnerA))
+                summaryRow(copy.text(.playerB), display(nameB, fallback: copy.text(.opponent)) + partnerSummary(partnerB))
+                summaryRow(copy.text(.bestOfSets), setsLabel)
+                summaryRow(copy.text(.gamesPerSet), "\(gamesPerSet)")
+                summaryRow(copy.text(.tieBreakTo), "\(tiebreakTo)")
+                summaryRow(copy.text(.noAd), noAd ? copy.text(.setupYes) : copy.text(.setupNo))
+                if bestOfSets > 1 {
+                    summaryRow(copy.text(.decidingMTB), decidingMTB ? copy.text(.setupYes) : copy.text(.setupNo))
+                }
+                summaryRow(copy.text(.firstServer), serverLabel(firstServer))
+            }
+        }
+    }
+
+    private func nameField(_ title: String, value: Binding<String>) -> some View {
+        VStack(spacing: 8) {
+            TextField(title, text: value)
+                .font(.system(size: 15, weight: .semibold))
+                .textFieldStyle(.plain)
+                .padding(10)
+                .background(.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+            Text(copy.text(.setupNameHint))
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private func genderOptions(for player: Binding<String>, partner: Binding<String>) -> some View {
+        VStack(spacing: 8) {
+            option(copy.text(.setupMale), selected: player.wrappedValue == "m") {
+                player.wrappedValue = "m"
+                partner.wrappedValue = "w"
+            }
+            option(copy.text(.setupFemale), selected: player.wrappedValue == "w") {
+                player.wrappedValue = "w"
+                partner.wrappedValue = "m"
+            }
+            Text(copy.text(.setupMixedHint))
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private func option(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            goForward()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 17, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text(title)
+                    .font(.system(size: 15, weight: .bold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(selected ? Color.black : Color.white)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .background(selected ? accent : Color.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder private var navigation: some View {
+        if step == .summary {
+            Button(action: startMatch) {
+                Text(copy.text(.startMatch))
+                    .font(.system(size: 13, weight: .black))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(accent)
+        } else if isNameStep {
+            Button(action: goForward) {
+                Text(copy.text(.setupNext))
+                    .font(.system(size: 13, weight: .bold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(accent)
+        }
+
+        if stepIndex > 0 {
+            Button(copy.text(.setupBack), action: goBack)
+                .buttonStyle(.bordered)
+                .font(.system(size: 11, weight: .semibold))
+        } else if canResume {
+            Button(copy.text(.resumeMatch), action: onResume)
+                .buttonStyle(.bordered)
+                .font(.system(size: 11, weight: .semibold))
+        }
+    }
+
+    private var matchKindLabel: String {
+        switch kind {
+        case .single: return copy.text(.singles)
+        case .double: return copy.text(.doubles)
+        case .mixed: return copy.text(.mixed)
+        }
+    }
+
+    private var setsLabel: String {
+        switch bestOfSets {
+        case 1: return copy.text(.oneSet)
+        case 5: return copy.text(.bestOfFive)
+        default: return copy.text(.bestOfThree)
+        }
+    }
+
+    private func display(_ name: String, fallback: String) -> String {
+        let value = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? fallback : value
+    }
+
+    private func partnerSummary(_ partner: String) -> String {
+        kind == .single ? "" : " / " + display(partner, fallback: copy.text(.partner))
+    }
+
+    private func serverLabel(_ side: Int) -> String {
+        let name = side == 0 ? display(nameA, fallback: copy.text(.me)) : display(nameB, fallback: copy.text(.opponent))
+        if kind == .single { return name }
+        return "\(copy.text(.team)) \(side == 0 ? "A" : "B") · \(name)"
+    }
+
+    private func summaryRow(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(title)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 2)
+            Text(value)
+                .font(.system(size: 11, weight: .bold))
+                .multilineTextAlignment(.trailing)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 2)
+    }
+
+    private func goForward() {
+        let allSteps = steps
+        guard let index = allSteps.firstIndex(of: step), index + 1 < allSteps.count else { return }
+        step = allSteps[index + 1]
+    }
+
+    private func goBack() {
+        let allSteps = steps
+        guard let index = allSteps.firstIndex(of: step), index > 0 else { return }
+        step = allSteps[index - 1]
     }
 
     private func startMatch() {
