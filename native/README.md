@@ -6,7 +6,7 @@
 
 - `Sources/ScoreCore/ScoreCore.swift`: nativer Swift-Zählkern; ohne Gerät, Netzwerk oder UI testbar.
 - `Tests/ScoreCoreTests`: automatisierte Tests für Tenniszählung, TB/MTB, No-Ad, Undo, Daten-Roundtrip.
-- `Sources/ScoreWatch`: erste native watchOS-SwiftUI-Oberfläche, Zählbuttons, Undo, Ergebnis-/Hinweisbanner, lokale atomare Speicherung nach jedem Punkt.
+- `Sources/ScoreWatch`: erste native watchOS-SwiftUI-Oberfläche, Zählbuttons, Undo, Ergebnis-/Hinweisbanner, lokale atomare Speicherung nach jedem Punkt. **Deutsch/Englisch** mit umschaltbarem Sprachkatalog in `ScoreLanguage.swift`.
 - `Package.swift`: Swift-Package zum Testen des Zählkerns.
 - `project.yml`: XcodeGen-Projektbeschreibung für eine Watch-only-Entwicklungs-App.
 
@@ -26,6 +26,14 @@ Der Kern läuft auch unter Swift auf Linux. **SwiftUI/watchOS ist dort nicht kom
 3. `TenniloScoreNative.xcodeproj` öffnen, unter **Signing & Capabilities** dein Apple-Development-Team wählen und bei Bedarf die Bundle-ID anpassen.
 4. Apple Watch am iPhone koppeln, in Xcode als Run-Ziel auswählen und `TenniloScoreWatch` ausführen.
 5. Auf der Watch Punkte zählen, Undo, Pausenanzeigen und Ergebnisansicht testen. Match wird nach jeder Aktion lokal als JSON gespeichert.
+6. Über **DE/EN** oben im Watch-Kopf die App-Sprache jederzeit wechseln. Die Einstellung wird auf der Watch dauerhaft gespeichert und kann von der Systemsprache abweichen.
+
+## Sprachunterstützung
+
+- Erste native Watch-Oberfläche vollständig in **Deutsch und Englisch** beschriftet (Bedienbuttons, Satzbezeichnung, No-Ad-/Seitenwechsel-/Pausenbanner, Siegeranzeige, Fehlermeldungen).
+- Ausgangssprache richtet sich beim ersten Start nach der Gerätesprache; über **DE/EN** jederzeit umschaltbar, ohne das laufende Match zurückzusetzen.
+- Namen sind Nutzerdaten und werden nicht übersetzt; lediglich die Platzhalter **ICH/GEGNER** werden als **ME/OPPONENT** angezeigt.
+- Für die spätere iPhone-App ist dieselbe Sprachwahl vorgesehen. Noch kein echter iPhone-Build; native Kompilierung/41-mm-Layout stehen weiterhin aus.
 
 ## Was diese Startversion bewusst **noch nicht** kann
 
