@@ -7,6 +7,10 @@ struct WatchMatchView: View {
     @State private var showRestartConfirmation = false
     @State private var saveError: String?
     @AppStorage("scoreLanguage") private var languageCode = ScoreLanguage.systemDefault
+    @AppStorage("scoreConfigured") private var scoreConfigured = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var showingConfiguration = false
+    @State private var showingSplash = true
 
     private var copy: ScoreCopy { ScoreCopy(code: languageCode) }
 
@@ -16,6 +20,20 @@ struct WatchMatchView: View {
     var body: some View {
         ZStack {
             Color(red: 0.035, green: 0.075, blue: 0.12).ignoresSafeArea()
+            if !scoreConfigured || showingConfiguration {
+                WatchMatchConfiguration(
+                    previous: session,
+                    canResume: scoreConfigured,
+                    onStart: { configuredSession in
+                        session = configuredSession
+                        scoreConfigured = true
+                        showingConfiguration = false
+                        dismissBanner()
+                        persist()
+                    },
+                    onResume: { showingConfiguration = false }
+                )
+            } else {
             ScrollView {
                 VStack(spacing: 7) {
                     HStack {
@@ -71,6 +89,20 @@ struct WatchMatchView: View {
                     }
                     .zIndex(4)
             }
+            }
+            if showingSplash {
+                ScoreSplashView()
+                    .transition(.opacity)
+                    .zIndex(20)
+            }
+        }
+        .onAppear {
+            let delay = reduceMotion ? 0.25 : 1.8
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.easeOut(duration: reduceMotion ? 0 : 0.35)) {
+                    showingSplash = false
+                }
+            }
         }
         .confirmationDialog(copy.text(.confirmNewMatch), isPresented: $showRestartConfirmation) {
             Button(copy.text(.newMatch), role: .destructive) { startNewMatch() }
@@ -90,6 +122,15 @@ struct WatchMatchView: View {
         if side == .a && name == "ICH" { return copy.text(.me) }
         if side == .b && name == "GEGNER" { return copy.text(.opponent) }
         return name
+    }
+
+    private var winningTeamName: String {
+        let winningSide = session.match.winner ?? .a
+        let name = displayName(for: winningSide)
+        guard session.matchKind != .single,
+              session.partnerNames.indices.contains(winningSide.rawValue) else { return name }
+        let partner = session.partnerNames[winningSide.rawValue]
+        return partner.isEmpty ? name : name + " / " + partner
     }
 
     private func scoreRow(_ side: Side, color: Color) -> some View {
@@ -164,7 +205,7 @@ struct WatchMatchView: View {
             Text(copy.text(.winner))
                 .font(.system(size: 18, weight: .black))
                 .foregroundStyle(homeColor)
-            Text(displayName(for: session.match.winner ?? .a))
+            Text(winningTeamName)
                 .font(.system(size: 18, weight: .bold))
                 .multilineTextAlignment(.center)
             Text(finalResult)
@@ -230,9 +271,9 @@ struct WatchMatchView: View {
     }
 
     private func startNewMatch() {
-        session = MatchSession(rules: session.match.rules, names: session.playerNames)
+        // Keep the completed/current session until the next setup is confirmed.
+        showingConfiguration = true
         dismissBanner()
-        persist()
     }
 
     private func persist() {
