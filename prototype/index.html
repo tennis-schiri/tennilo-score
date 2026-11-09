@@ -493,7 +493,7 @@ function translateUI(){
  if(de&&en){de.classList.toggle('active',demoLang==='de');en.classList.toggle('active',demoLang==='en')}
  for(const id of ['phoneLangToggle','watchLangToggle']){
   const button=document.getElementById(id);
-  if(button)button.textContent=demoLang.toUpperCase()+' / '+(demoLang==='de'?'EN':'DE');
+  if(button){const label=demoLang.toUpperCase()+' / '+(demoLang==='de'?'EN':'DE');if(button.textContent!==label)button.textContent=label;}
  }
 }
 function setDemoLanguage(next){
