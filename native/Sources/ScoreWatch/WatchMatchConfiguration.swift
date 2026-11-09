@@ -24,7 +24,6 @@ struct WatchMatchConfiguration: View {
     @State private var noAd: Bool
     @State private var decidingMTB: Bool
     @State private var firstServer: Int
-    @State private var invalidMixed: Bool = false
     @State private var step: SetupStep = .matchType
 
     private enum SetupStep: Equatable {
@@ -336,11 +335,6 @@ struct WatchMatchConfiguration: View {
     }
 
     private func startMatch() {
-        if kind == .mixed && (genderA == genderPartnerA || genderB == genderPartnerB) {
-            invalidMixed = true
-            return
-        }
-        invalidMixed = false
         func cleaned(_ text: String, fallback: String) -> String {
             let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
             return value.isEmpty ? fallback : value
@@ -364,7 +358,10 @@ struct WatchMatchConfiguration: View {
                 cleaned(partnerA, fallback: copy.text(.partnerA)),
                 cleaned(partnerB, fallback: copy.text(.partnerB))
             ],
-            genders: [genderA, genderPartnerA, genderB, genderPartnerB]
+            genders: [
+                genderA, kind == .mixed ? (genderA == "m" ? "w" : "m") : genderPartnerA,
+                genderB, kind == .mixed ? (genderB == "m" ? "w" : "m") : genderPartnerB
+            ]
         )
         onStart(session)
     }
