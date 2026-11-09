@@ -6,6 +6,9 @@ struct WatchMatchView: View {
     @State private var bannerToken = UUID()
     @State private var showRestartConfirmation = false
     @State private var saveError: String?
+    @AppStorage("scoreLanguage") private var languageCode = ScoreLanguage.systemDefault
+
+    private var copy: ScoreCopy { ScoreCopy(code: languageCode) }
 
     private let homeColor = Color(red: 0.76, green: 0.96, blue: 0.39)
     private let awayColor = Color(red: 0.45, green: 0.81, blue: 0.97)
@@ -18,8 +21,15 @@ struct WatchMatchView: View {
                     HStack {
                         Text("TENNILO SCORE").font(.system(size: 9, weight: .black))
                         Spacer(minLength: 4)
-                        Text(session.match.phase == .matchTiebreak ? "MTB" : session.match.phase == .tiebreak ? "TB" : "SATZ \(session.match.completed.count + 1)")
+                        Text(session.match.phase == .matchTiebreak ? "MTB" : session.match.phase == .tiebreak ? "TB" : "\(copy.text(.set)) \(session.match.completed.count + 1)")
                             .font(.system(size: 9, weight: .bold))
+                        Button(languageCode.uppercased()) {
+                            languageCode = languageCode == "de" ? "en" : "de"
+                        }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundStyle(homeColor)
+                        .accessibilityLabel(copy.text(.changeLanguage))
                     }
                     .foregroundStyle(.white.opacity(0.72))
 
@@ -33,11 +43,11 @@ struct WatchMatchView: View {
                     pointButton(.b, color: awayColor)
 
                     HStack(spacing: 6) {
-                        Button("↶ UNDO") { undo() }
+                        Button(copy.text(.undo)) { undo() }
                             .buttonStyle(.bordered)
                             .disabled(session.undoHistory.isEmpty)
                             .font(.system(size: 10, weight: .bold))
-                        Button("NEU") { showRestartConfirmation = true }
+                        Button(copy.text(.newMatchShort)) { showRestartConfirmation = true }
                             .buttonStyle(.bordered)
                             .font(.system(size: 10, weight: .bold))
                     }
@@ -62,22 +72,31 @@ struct WatchMatchView: View {
                     .zIndex(4)
             }
         }
-        .confirmationDialog("Neues Match starten?", isPresented: $showRestartConfirmation) {
-            Button("Neues Match", role: .destructive) { startNewMatch() }
-            Button("Abbrechen", role: .cancel) { }
+        .confirmationDialog(copy.text(.confirmNewMatch), isPresented: $showRestartConfirmation) {
+            Button(copy.text(.newMatch), role: .destructive) { startNewMatch() }
+            Button(copy.text(.cancel), role: .cancel) { }
         }
-        .alert("Speichern fehlgeschlagen", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
+        .alert(copy.text(.saveFailed), isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
             Button("OK", role: .cancel) { saveError = nil }
         } message: {
-            Text(saveError ?? "Bitte prüfe den freien Speicher der Watch.")
+            Text(saveError ?? copy.text(.saveFailedExplanation))
         }
+    }
+
+    private func displayName(for side: Side) -> String {
+        let i = side.rawValue
+        guard session.playerNames.indices.contains(i) else { return "\(copy.text(.team)) \(i + 1)" }
+        let name = session.playerNames[i]
+        if side == .a && name == "ICH" { return copy.text(.me) }
+        if side == .b && name == "GEGNER" { return copy.text(.opponent) }
+        return name
     }
 
     private func scoreRow(_ side: Side, color: Color) -> some View {
         let i = side.rawValue
         return VStack(spacing: 2) {
             HStack(spacing: 2) {
-                Text(session.playerNames.indices.contains(i) ? session.playerNames[i] : "TEAM \(i + 1)")
+                Text(displayName(for: side))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if session.match.currentServer == side && !session.match.isFinished {
@@ -105,7 +124,7 @@ struct WatchMatchView: View {
             award(side)
         } label: {
             HStack(spacing: 6) {
-                Text(side == .a ? "ICH" : "GEGNER")
+                Text(side == .a ? copy.text(.me) : copy.text(.opponent))
                     .font(.system(size: 15, weight: .black))
                 Spacer(minLength: 0)
                 Text("+1")
@@ -126,10 +145,10 @@ struct WatchMatchView: View {
                 .font(.system(size: 18, weight: .black))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(homeColor)
-            Text(notice == .decidingPoint ? "NO-AD · Nächster Punkt entscheidet" : "Weiterzählen nach dem Hinweis")
+            Text(notice == .decidingPoint ? copy.text(.noAdExplanation) : copy.text(.continueAfterNotice))
                 .font(.system(size: 11, weight: .medium))
                 .multilineTextAlignment(.center)
-            Text("Zum Schließen tippen")
+            Text(copy.text(.tapToClose))
                 .font(.system(size: 9))
                 .foregroundStyle(.white.opacity(0.65))
         }
@@ -140,20 +159,20 @@ struct WatchMatchView: View {
 
     private var matchFinishedView: some View {
         VStack(spacing: 10) {
-            Text("MATCH BEENDET")
+            Text(copy.text(.matchEnded))
                 .font(.system(size: 10, weight: .black))
-            Text("🏆 SIEGER")
+            Text(copy.text(.winner))
                 .font(.system(size: 18, weight: .black))
                 .foregroundStyle(homeColor)
-            Text(session.playerNames[session.match.winner?.rawValue ?? 0])
+            Text(displayName(for: session.match.winner ?? .a))
                 .font(.system(size: 18, weight: .bold))
                 .multilineTextAlignment(.center)
             Text(finalResult)
                 .font(.system(size: 12, weight: .bold))
                 .multilineTextAlignment(.center)
-            Text("Spieldauer \(elapsedTime)")
+            Text("\(copy.text(.duration)) \(elapsedTime)")
                 .font(.system(size: 11, weight: .medium))
-            Text("Zum Schließen tippen")
+            Text(copy.text(.tapToClose))
                 .font(.system(size: 9))
                 .foregroundStyle(.white.opacity(0.65))
         }
@@ -178,11 +197,11 @@ struct WatchMatchView: View {
 
     private func noticeTitle(_ notice: MatchNotice) -> String {
         switch notice {
-        case .changeEnds: return "SEITENWECHSEL"
-        case .setBreak: return "SATZPAUSE"
-        case .changeEndsAndSetBreak: return "SEITENWECHSEL\n+ SATZPAUSE"
-        case .decidingPoint: return "ENTSCHEIDUNGSPUNKT"
-        case .matchFinished: return "MATCH BEENDET"
+        case .changeEnds: return copy.text(.changeEnds)
+        case .setBreak: return copy.text(.setBreak)
+        case .changeEndsAndSetBreak: return copy.text(.changeEndsAndBreak)
+        case .decidingPoint: return copy.text(.decidingPoint)
+        case .matchFinished: return copy.text(.matchEnded)
         }
     }
 
