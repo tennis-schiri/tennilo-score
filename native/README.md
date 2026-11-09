@@ -7,7 +7,7 @@
 - `Sources/ScoreCore/ScoreCore.swift`: nativer Swift-Zählkern; ohne Gerät, Netzwerk oder UI testbar.
 - `Tests/ScoreCoreTests`: automatisierte Tests für Tenniszählung, TB/MTB, No-Ad, Undo, Daten-Roundtrip.
 - `Sources/ScoreWatch`: native watchOS-SwiftUI-Oberfläche mit **eigener Watch-Konfiguration** (Einzel/Doppel/Mixed, vier Namen inkl. M/W, Matchformat, No-Ad, erster Aufschlag), Zählbuttons, Undo, Ergebnis-/Hinweisbanner und lokaler Speicherung. **Deutsch/Englisch** mit Sprachkatalog in `ScoreLanguage.swift`.
-- `WatchMatchConfiguration.swift`: Matchstart direkt auf der Watch ohne iPhone; die derzeitige Zähllogik erfasst bei Doppel/Mixed weiterhin **Teams**, keine einzelnen Aufschläger/Returnpositionen.
+- `WatchMatchConfiguration.swift`: **geführter Watch-Assistent statt Scroll-Formular**: Matchart → Spieler (und ggf. Partner/Mixed-Geschlecht) → Satzformat → Spiele/Satz → Tiebreak → No-Ad → ggf. Match-Tiebreak → aufschlagendes Team/Spieler → Kontrolle/Start. Jede Auswahl springt zum nächsten Schritt; Namen haben eine eigene Eingabeseite mit „Weiter“. Fortschritt, „Zurück“ und DE/EN sind jederzeit sichtbar. Mixed-Partner erhält automatisch das andere Geschlecht. Keine iPhone-Verbindung erforderlich; der Zählkern erfasst bei Doppel/Mixed weiterhin **Teams**, keine einzelnen Aufschläger/Returnpositionen.
 - `ScoreSplashView.swift` und `Assets.xcassets/ScoreBrand`: animierter Start mit freigegebenem originalem TENNILO-Score-Logo. Gemeinsame Komponente für künftiges iOS-Target; aktuell in der nativen Watch eingebunden.
 - `Package.swift`: Swift-Package zum Testen des Zählkerns.
 - `project.yml`: XcodeGen-Projektbeschreibung für eine Watch-only-Entwicklungs-App.
@@ -27,7 +27,7 @@ Der Kern läuft auch unter Swift auf Linux. **SwiftUI/watchOS ist dort nicht kom
 2. Repository klonen und `cd native && xcodegen generate` ausführen.
 3. `TenniloScoreNative.xcodeproj` öffnen, unter **Signing & Capabilities** dein Apple-Development-Team wählen und bei Bedarf die Bundle-ID anpassen.
 4. Apple Watch am iPhone koppeln, in Xcode als Run-Ziel auswählen und `TenniloScoreWatch` ausführen.
-5. Beim ersten Start zeigt die Watch die animierte TENNILO-Score-Startansicht und danach die **Matchkonfiguration direkt auf der Uhr**. Matchart, Spieler, Regeln und ersten Aufschlag wählen und Match starten.
+5. Beim ersten Start zeigt die Watch die animierte TENNILO-Score-Startansicht und danach den **Schritt-für-Schritt-Assistenten**. Pro Bildschirm eine Entscheidung treffen, per „Zurück“ korrigieren, am Ende Zusammenfassung prüfen und Match starten. Für Doppel/Mixed erscheinen zusätzliche Mannschafts- bzw. Geschlechtsschritte.
 6. Punkte zählen, Undo, Pausenanzeigen und Ergebnisansicht testen. Match wird nach jeder Aktion lokal als JSON gespeichert.
 7. Über **DE/EN** oben in der Watch-Konfiguration oder der Matchansicht die App-Sprache jederzeit wechseln. Die Einstellung wird auf der Watch dauerhaft gespeichert und kann von der Systemsprache abweichen.
 
