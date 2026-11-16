@@ -1658,10 +1658,14 @@ function phoneMenuClick(index){
  }
  if(original.id==='watchRetireConfirm'&&(selectedRetiringTeam!==0&&selectedRetiringTeam!==1))return;
  const previous=watchMenuScreen;
- original.click(); // Execute the tested Watch action rather than duplicate rules.
+ const previousEvent=events[0];
+ original.click(); // Execute the existing Watch action; no separate phone scoring logic.
  if(original.id==='watchFixSave'){
-  if(watchMenuScreen==='Correction'){phoneMenuError('Ungültige Eingabe','Invalid score');return}
-  closePhoneMenu();return;
+  if(events[0]!==previousEvent&&events[0]?.msg==='Spielstand korrigiert'){
+   closePhoneMenu();switchTab('match');return;
+  }
+  phoneMenuError($('status').textContent||'Ungültige Eingabe',
+    $('status').textContent||'Invalid score');return;
  }
  if(['swapServe','watchRetireConfirm'].includes(original.id)){
   closePhoneMenu();
