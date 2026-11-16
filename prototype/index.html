@@ -1142,8 +1142,8 @@ function pointContext(){
  const breakTeams=state.tb?[]:[0,1].filter(t=>t!==serverTeam&&gameWinsWithNextPoint(t));
  const setTeams=[0,1].filter(setBallFor),matchTeams=[0,1].filter(matchBallFor);
  const warnings=[];
- for(const t of breakTeams)warnings.push('BREAKBALL · '+config.names[t]);
- for(const t of setTeams)warnings.push((matchTeams.includes(t)?'MATCHBALL #'+(state.matchBallCount[t]+1):'SATZBALL #'+(state.setBallCount[t]+1))+' · '+config.names[t]);
+ for(const t of breakTeams)warnings.push('BREAKBALL · '+teamDisplayName(t));
+ for(const t of setTeams)warnings.push((matchTeams.includes(t)?'MATCHBALL #'+(state.matchBallCount[t]+1):'SATZBALL #'+(state.setBallCount[t]+1))+' · '+teamDisplayName(t));
  const serverName=serverKey?nameOf(serverKey):config.names[serverTeam];
  const receiverName=receiverKey?nameOf(receiverKey):config.mode==='double'?'noch nicht festgelegt':config.names[1-serverTeam];
  return {before:historyScore(),setIndex:state.completed.length,gameIndex:currentGame(),gameScoreBefore:[...state.games],tb:state.tb,mtb:state.mtb,serverTeam,server:serverName,receiver:receiverName,
@@ -1160,10 +1160,10 @@ function historyGameCard(g,isCurrent=false){
   const d=e.details;
   const label=d.gameEnd?(d.setEnd?(d.matchEnd?'MATCH ':'SATZ '):d.tb?'TIEBREAK ':d.serverTeam!==d.pointWinner?'BREAK ':'SPIEL ')+(d.mtb?d.afterPoints.join(':'):d.gameScoreAfter.join(':')):d.afterPoints.join(':');
   const flags=(d.nextWarnings||[]).filter(w=>/BREAKBALL|SATZBALL|MATCHBALL/.test(w));
-  return '<span class="history-token '+(d.gameEnd?'history-token-end':'')+'" title="'+esc('Punkt für '+config.names[d.pointWinner]+' · Aufschlag: '+d.server+' · Return: '+d.receiver)+'">'+esc(label)+flags.map(v=>'<b class="history-token-flag">'+esc(v.startsWith('BREAKBALL')?'BB':v.startsWith('MATCHBALL')?'MB':'SB')+'</b>').join('')+'</span>'+((g.tb&&d.sideChange&&index<g.points.length-1)?'<span class="history-tb-divider" role="separator" aria-label="Seitenwechsel" title="Seitenwechsel"></span>':'');
+  return '<span class="history-token '+(d.gameEnd?'history-token-end':'')+'" title="'+esc('Punkt für '+teamDisplayName(d.pointWinner)+' · Aufschlag: '+d.server+' · Return: '+d.receiver)+'">'+esc(label)+flags.map(v=>'<b class="history-token-flag">'+esc(v.startsWith('BREAKBALL')?'BB':v.startsWith('MATCHBALL')?'MB':'SB')+'</b>').join('')+'</span>'+((g.tb&&d.sideChange&&index<g.points.length-1)?'<span class="history-tb-divider" role="separator" aria-label="Seitenwechsel" title="Seitenwechsel"></span>':'');
  }).join('');
  const changes=g.points.filter(e=>e.details.sideChange).length;
- const extra=(isBreak?historyBadge('BREAK · '+config.names[final.pointWinner],'break'):'')+
+ const extra=(isBreak?historyBadge('BREAK · '+teamDisplayName(final.pointWinner),'break'):'')+
  (complete&&final.setEnd?historyBadge(final.matchEnd?'MATCH BEENDET':'SATZ BEENDET','set'):'')+
  (changes?historyBadge('↔ SEITENWECHSEL'+(changes>1?' ×'+changes:''),'change'):'');
  const service=g.tb?'🎾 Aufschlagwechsel im Tiebreak':'🎾 Aufschlag: '+first.server;
@@ -1172,7 +1172,7 @@ function historyGameCard(g,isCurrent=false){
  '</span><strong class="history-game-score">'+esc(score)+'</strong></div><div class="history-game-players">'+
  esc(service+receive)+'</div><div class="history-tokens">'+points+'</div>'+
  (extra?'<div class="history-game-events">'+extra+'</div>':'')+
- (complete?'<div class="history-game-footer">Spiel für '+esc(config.names[final.pointWinner])+'</div>':'')+'</article>';
+ (complete?'<div class="history-game-footer">'+esc(final.matchEnd?'Match für ':final.setEnd?'Satz für ':isBreak?'Break für ':'Spiel für ')+esc(teamDisplayName(final.pointWinner))+'</div>':'')+'</article>';
 }
 function renderStats(){
  const stats=[0,1].map(()=>({points:0,serveWon:0,servePlayed:0,returnWon:0,returnPlayed:0,breakWon:0,breakChances:0,games:0}));
@@ -1314,8 +1314,8 @@ function chooseSetup(index){
  render();
 }
 function beginNewSet(){state.games=[0,0];state.points=[0,0];state.deuceCount=0;state.setBallCount=[0,0];state.tb=false;state.mtb=false;state.tbStart=0;state.serveOrder=[];state.receiveDeuce=[null,null];state.setupCount=0;state.setupPending=false;if(config.finalset==='mtb'&&isFinal()){state.mtb=true;state.tb=true;state.tbFirstServer=state.server;event('Match-Tiebreak beginnt')}if(!state.finished&&config.mode==='double')requestSetup()}
-function setWinner(w,tbLoser=null){state.setDurations.push(Math.max(0,Date.now()-(state.setStartedAt||started)));let wasMTB=state.mtb;state.completed.push(wasMTB?[...state.points]:[...state.games]);state.completedTB.push(wasMTB?'mtb':tbLoser);state.sets[w]++;if(state.sets[w]>=Math.floor(config.sets/2)+1){state.finished=true;state.winner=w;state.matchEndedAt=Date.now();state.finishDismissed=false;state.tb=false;state.mtb=false;event(person(w,0)+' gewinnt das Match')}else{state.setStartedAt=Date.now();beginNewSet()}}
-function gameWinner(w){state.deuceCount=0;const oldServer=servingTeam();state.games[w]++;state.points=[0,0];state.server=1-oldServer;state.sideChange=currentGame()%2===1;event('Spiel für '+config.names[w]);let target=config.games,a=state.games[w],b=state.games[1-w];if(a>=target&&a-b>=2){event('Satz für '+config.names[w]);setWinner(w)}else if(a===target&&b===target){state.tb=true;state.tbStart=currentGame()%4;state.tbFirstServer=oldServer===0?1:0;event('Tiebreak beginnt')}else if(config.mode==='double'&&state.setupCount<2)requestSetup()}
+function setWinner(w,tbLoser=null){state.setDurations.push(Math.max(0,Date.now()-(state.setStartedAt||started)));let wasMTB=state.mtb;state.completed.push(wasMTB?[...state.points]:[...state.games]);state.completedTB.push(wasMTB?'mtb':tbLoser);state.sets[w]++;if(state.sets[w]>=Math.floor(config.sets/2)+1){state.finished=true;state.winner=w;state.matchEndedAt=Date.now();state.finishDismissed=false;state.tb=false;state.mtb=false;event(teamDisplayName(w)+' gewinnt das Match')}else{state.setStartedAt=Date.now();beginNewSet()}}
+function gameWinner(w){state.deuceCount=0;const oldServer=servingTeam();state.games[w]++;state.points=[0,0];state.server=1-oldServer;state.sideChange=currentGame()%2===1;event('Spiel für '+teamDisplayName(w));let target=config.games,a=state.games[w],b=state.games[1-w];if(a>=target&&a-b>=2){event('Satz für '+teamDisplayName(w));setWinner(w)}else if(a===target&&b===target){state.tb=true;state.tbStart=currentGame()%4;state.tbFirstServer=oldServer===0?1:0;event('Tiebreak beginnt')}else if(config.mode==='double'&&state.setupCount<2)requestSetup()}
 // A set/match ball exists only when the NEXT point would actually finish the set.
 function gameWinsWithNextPoint(team){
  const a=state.points[team],b=state.points[1-team];
@@ -1357,7 +1357,7 @@ function point(w){if(watchConfigOpen)return;if(state.decisionBanner&&Date.now()<
   if(matchBallFor(t))state.matchBallCount[t]++;
  }
  const beforeDeuce=config.deuce!=='noad'&&!state.tb&&p[0]===3&&p[1]===3;
- state.pointCount++;if(state.tb){p[w]++;let target=state.mtb?10:config.tb;if(p[w]>=target&&p[w]-p[other]>=2){const loser=p[other];if(!state.mtb){state.games[w]++;state.server=1-state.tbFirstServer}event('Tiebreak für '+config.names[w]);setWinner(w,state.mtb?null:loser);state.sideChange=!state.finished}else if(tbChangeEnds(p[0]+p[1]))state.sideChange=true}else if(config.deuce==='noad'){p[w]++;if(p[w]>=4)gameWinner(w)}else{if(p[w]===4)gameWinner(w);else if(p[w]===3&&p[other]===4)p[other]=3;else if(p[w]>=3&&p[other]<3)gameWinner(w);else if(p[w]===3&&p[other]===3)p[w]=4;else p[w]++}if(!state.tb&&!state.finished&&config.deuce!=='noad'&&state.points[0]===3&&state.points[1]===3&&!beforeDeuce)state.deuceCount++;
+ state.pointCount++;if(state.tb){p[w]++;let target=state.mtb?10:config.tb;if(p[w]>=target&&p[w]-p[other]>=2){const loser=p[other];if(!state.mtb){state.games[w]++;state.server=1-state.tbFirstServer}event('Tiebreak für '+teamDisplayName(w));setWinner(w,state.mtb?null:loser);state.sideChange=!state.finished}else if(tbChangeEnds(p[0]+p[1]))state.sideChange=true}else if(config.deuce==='noad'){p[w]++;if(p[w]>=4)gameWinner(w)}else{if(p[w]===4)gameWinner(w);else if(p[w]===3&&p[other]===4)p[other]=3;else if(p[w]>=3&&p[other]<3)gameWinner(w);else if(p[w]===3&&p[other]===3)p[w]=4;else p[w]++}if(!state.tb&&!state.finished&&config.deuce!=='noad'&&state.points[0]===3&&state.points[1]===3&&!beforeDeuce)state.deuceCount++;
  context.after=historyScore();
  context.pointWinner=w;
  context.gameScoreAfter=[...state.games];
@@ -1376,7 +1376,7 @@ function point(w){if(watchConfigOpen)return;if(state.decisionBanner&&Date.now()<
  if(state.sideChange&&!state.finished)context.changes.push('↔ Seitenwechsel');
  if(state.games.join(':')!==undo[undo.length-1].state.games.join(':'))context.changes.push('Spielstand '+state.games.join(':'));
  if(state.completed.length>undo[undo.length-1].state.completed.length)context.changes.push('Satz beendet');
- event('Punkt für '+config.names[w],context);
+ event('Punkt für '+teamDisplayName(w),context);
  if(state.sideChange&&!state.finished)event('↔ Seitenwechsel · '+historyScore());
  if(!state.finished){
   if(context.setEnd)setRest(state.sideChange?'both':'set');
