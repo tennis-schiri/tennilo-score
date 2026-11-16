@@ -733,6 +733,23 @@ const $=id=>document.getElementById(id), clone=o=>JSON.parse(JSON.stringify(o));
 // Keep German source texts, then apply English at the presentation layer. This also
 // works for dynamically reconstructed score tables, histories, notices and statistics.
 const DEMO_TRANSLATIONS = [
+ ['Jede farbige Karte ist ein Team. Die beiden Namen darin gehören zusammen.','Each colored card represents one team. The two players inside belong together.'],
+ ['Diese beiden spielen zusammen','These two play together'],
+ ['Für ein Mixed wird das Geschlecht des Partners automatisch ergänzt.','In mixed doubles, the partner\'s gender is assigned automatically.'],
+ ['Geschlecht auswählen','Choose gender'],
+ ['Geschlecht wählen','Choose gender'],
+ ['Partner · automatisch','Partner · automatic'],
+ ['Geschlecht · automatisch','Gender · automatic'],
+ ['Vom ersten Spieler automatisch übernommen','Automatically assigned from first player'],
+ ['Namen bearbeiten oder übernehmen','Edit the name or keep it'],
+ ['Spieler 1 · Team A','Player 1 · Team A'],
+ ['Spieler 1 · Team B','Player 1 · Team B'],
+ ['Spieler 2 · Team A (Partner)','Player 2 · Team A (partner)'],
+ ['Spieler 2 · Team B (Partner)','Player 2 · Team B (partner)'],
+ ['Spieler A eingeben · Team A','Enter player A · Team A'],
+ ['Spieler B eingeben · Team B','Enter player B · Team B'],
+ ['Partner A eingeben · Team A','Enter partner A · Team A'],
+ ['Partner B eingeben · Team B','Enter partner B · Team B'],
  ['MATCH BEENDET · AUFGABE','MATCH FINISHED · RETIREMENT'],
  ['Spielstand bei Aufgabe','Score at retirement'],
  ['Sieger durch Aufgabe','Winner by retirement'],
@@ -1951,6 +1968,7 @@ function modeFields(){
  $('mixedGenderNote').classList.toggle('hidden',!mixed);
  document.querySelectorAll('.phone-gender-row').forEach(el=>el.classList.toggle('hidden',!mixed));
  document.querySelectorAll('.phone-team-card-head span').forEach(el=>el.classList.toggle('hidden',!doubles));
+ document.querySelector('.phone-team-explainer').classList.toggle('hidden',!doubles);
  document.querySelector('label[for="playerA"]').textContent=doubles?'Spieler 1 · Team A':'Spieler · Team A';
  document.querySelector('label[for="playerB"]').textContent=doubles?'Spieler 1 · Team B':'Spieler · Team B';
  renderPhoneGenderSelections();
