@@ -1235,7 +1235,7 @@ function phaseLabel(){
  return 'SATZ '+(state.completed.length+1)+' · SPIEL '+(currentGame()+1);
 }
 function tbChangeEnds(pointNumber){return config.tbEnds==='144'?(pointNumber>=1&&(pointNumber-1)%4===0):pointNumber>0&&pointNumber%6===0}
-function point(w){if(watchConfigOpen)return;if(state.decisionBanner&&Date.now()<state.decisionBanner.largeUntil)return;if(state.rest&&Date.now()<state.rest.largeUntil)return;if(state.finished){note('Match bereits beendet');return}if(state.awaitingServe){note('Bitte zuerst den ersten Aufschläger auswählen');return}if(state.setupPending){note('Bitte zuerst die Aufstellung bestätigen');return}snapshot();state.rest=null;state.decisionBanner=null;clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);const context=pointContext();state.sideChange=false;let p=state.points,other=1-w;
+function point(w){if(watchConfigOpen)return;if(state.decisionBanner&&Date.now()<state.decisionBanner.largeUntil)return;if(state.rest&&Date.now()<state.rest.largeUntil)return;if(state.finished){note('Match bereits beendet');return}if(state.awaitingServe){note('Bitte zuerst den ersten Aufschläger auswählen');return}if(state.setupPending){note('Bitte zuerst die Aufstellung bestätigen');return}selectedHistorySet=null;snapshot();state.rest=null;state.decisionBanner=null;clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);const context=pointContext();state.sideChange=false;let p=state.points,other=1-w;
  // Count each actual point played at set/match point, even when the chance is missed.
  for(let t=0;t<2;t++)if(setBallFor(t)){
   state.setBallCount[t]++;
@@ -1836,6 +1836,7 @@ function switchTab(t){
  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t));
  if(t==='history'){
+  $('phone').scrollTop=0;
   selectedHistorySet=null;
   renderHistory();
   scrollHistoryToCurrent();
