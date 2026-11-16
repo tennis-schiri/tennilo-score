@@ -42,10 +42,11 @@ sollen weitere Rückschlagsportarten hinzukommen:
 - **Padel**
 - **Pickleball**
 - **Beach Tennis**
+- **Tischtennis**
 
 Produktprinzip: ein gemeinsames TENNILO-Score-Erlebnis mit Watch-first-Bedienung,
 aber je Sportart eigenen Zählregeln, Matchformaten und benötigten Einstellungen.
 Bestehende Tennis-Zählregeln nicht ungeprüft für andere Sportarten übernehmen.
 
 **Priorität:** später / nach erfolgreichen Tennis-Betatests; keine zugesagten
-Veröffentlichungstermine für Padel, Pickleball oder Beach Tennis.
+Veröffentlichungstermine für Padel, Pickleball, Beach Tennis oder Tischtennis.
