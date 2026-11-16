@@ -30,3 +30,22 @@ Eigenständige Tennis-Zähl-App mit Watch-first-Bedienung; spätere Anbindung an
 - Noch kein Live-Deployment konfiguriert.
 
 **Hinweis:** Dies ist ein Prototyp. Die Speicherung des Quellcodes in GitHub ist keine Veröffentlichung auf einer Website.
+
+## Roadmap – spätere Erweiterung auf weitere Rückschlagsportarten
+
+**Status: beschlossen als langfristige Produktidee; keine Umsetzung vor dem Tennis-MVP.**
+
+Nach einem stabilen TENNILO Score für Tennis auf Apple Watch (Betatest 27.12.2026)
+und dem anschließenden Wear-OS-Ausbau (angestrebter Betatest 30.01.2027)
+sollen weitere Rückschlagsportarten hinzukommen:
+
+- **Padel**
+- **Pickleball**
+- **Beach Tennis**
+
+Produktprinzip: ein gemeinsames TENNILO-Score-Erlebnis mit Watch-first-Bedienung,
+aber je Sportart eigenen Zählregeln, Matchformaten und benötigten Einstellungen.
+Bestehende Tennis-Zählregeln nicht ungeprüft für andere Sportarten übernehmen.
+
+**Priorität:** später / nach erfolgreichen Tennis-Betatests; keine zugesagten
+Veröffentlichungstermine für Padel, Pickleball oder Beach Tennis.
