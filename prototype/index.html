@@ -196,15 +196,19 @@
 .demo-splash .splash-orbit:after{content:'';position:absolute;inset:18px;border:1px dashed #bcf75c55;border-radius:50%}
 .demo-splash .splash-orbit span{position:absolute;top:0;left:50%;width:9px;height:9px;background:#bcf75c;border-radius:50%;box-shadow:0 0 15px #bcf75c;transform:translate(-50%,-50%)}
 .demo-splash .splash-orbit span+span{top:auto;bottom:0;background:#7fd6f8;box-shadow:0 0 15px #7fd6f8;transform:translate(-50%,50%)}
-.demo-splash .splash-brand{position:relative;display:block;width:min(72%,226px);height:auto;aspect-ratio:1361/390;max-height:95px;object-fit:contain;background:transparent;clip-path:url(#score-logo-outline)}
+.demo-splash .splash-brand-motion{position:relative;display:flex;align-items:center;justify-content:center;width:min(72%,226px);max-height:95px;opacity:0;transform:translate3d(0,8px,0);transition:opacity .85s ease-out,transform .85s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
+.demo-splash.splash-ready .splash-brand-motion{opacity:1;transform:translate3d(0,0,0)}
+.demo-splash .splash-brand{display:block;width:100%;height:auto;aspect-ratio:1361/390;max-height:95px;object-fit:contain;background:transparent;clip-path:url(#score-logo-outline)}
 .demo-splash .splash-loading{position:relative;width:65px;height:3px;border-radius:8px;background:#45647a;overflow:hidden}
-.demo-splash .splash-loading span{display:block;width:100%;height:100%;background:#c6f784}
+.demo-splash .splash-loading span{display:block;width:36%;height:100%;background:#c6f784;transform:translate3d(0,0,0);transition:transform 1.55s ease-in-out}
+.demo-splash.splash-ready .splash-loading span{transform:translate3d(178%,0,0)}
 .demo-splash small{position:relative;color:#a8c3d0;letter-spacing:.17em;font-size:9px;font-weight:850}
 #watchSplash{border-radius:58px}
 #watchSplash .splash-orbit{width:125px;height:125px}
-#watchSplash .splash-brand{width:80%;max-height:60px}
+#watchSplash .splash-brand-motion{width:80%;max-height:60px}
+#watchSplash .splash-brand{max-height:60px}
 #phoneSplash{border-radius:27px}
-/* Startbildschirm bleibt bewusst statisch, damit auf schwächeren Geräten keine Ruckler entstehen. */
+/* Nur die Logo-Hülle und der Ladebalken bewegen sich. Die freigestellte Originalgrafik bleibt statisch. */
 .watch-configuration{position:absolute;inset:0;z-index:11;background:#0b1625;color:#eef7ff;overflow-y:auto;overscroll-behavior:contain;padding:17px 12px 22px;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin}
 .watch-config-title{font-size:12px;font-weight:950;color:#c9ff8d;text-align:center;letter-spacing:.03em}
 .watch-config-desc{text-align:center;font-size:9px;color:#91aebf}
@@ -214,7 +218,7 @@
 .watch-config-start{background:#bef37b;color:#17231a;border:0;border-radius:11px;padding:11px 7px;font-size:12px;font-weight:950;margin-top:5px}
 .watch-config-cancel{background:transparent;color:#b4d9ed;border:1px solid #57758e;border-radius:10px;padding:7px 4px;font-size:10px}
 .watch-config-open{border:0;background:transparent;color:#bde8ff;font-size:14px;padding:0 5px;cursor:pointer}
-@media(prefers-reduced-motion:reduce){.demo-splash *{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.demo-splash *{animation:none!important;transition:none!important}.demo-splash .splash-brand-motion{opacity:1;transform:none;will-change:auto}.demo-splash .splash-loading span{transform:none!important;width:100%}}
 .watch-config-head{display:flex;align-items:center;justify-content:space-between;gap:5px}
 .watch-config-head .watch-config-title{flex:1;text-align:left;font-size:11px}
 .watch-lang-toggle{flex:0 0 auto;border:1px solid #557c92;background:#193347;color:#c7e5f2;border-radius:8px;font-weight:900;font-size:9px;padding:5px}
@@ -535,7 +539,7 @@
   <button class="watch-config-start" id="watchStart" type="button">MATCH STARTEN</button>
   <button class="watch-config-cancel hidden" id="watchConfigCancel" type="button">← Zurück zum Match</button>
 </div>
-</div><div class="demo-splash" id="watchSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="watch-first-serve" id="watchFirstServe"><div class="watch-first-title" id="firstServeTitle">WER SCHLÄGT ZUERST AUF?</div><div class="watch-first-description" id="firstServeDescription">Zum Starten des Matches auswählen</div><button class="watch-first-choice" id="firstServeA" type="button">Spieler A</button><button class="watch-first-choice" id="firstServeB" type="button">Spieler B</button></div><div class="watch-setup hidden" id="watchSetup" aria-live="polite"><div class="watch-setup-step" id="setupStep">AUFSTELLUNG</div><div class="watch-setup-title" id="setupWatchTitle">Wer schlägt auf?</div><div class="watch-setup-perspective">Blickrichtung: zum Netz ↑</div><div class="watch-setup-choices"><button id="setupChoice0" class="watch-choice"></button><button id="setupChoice1" class="watch-choice"></button></div><button class="watch-setup-back" id="setupBack">↶ Zurück</button></div><div class="watch-rest-overlay hidden" id="watchRestOverlay" aria-live="polite" role="button" tabindex="0" aria-label="Pausenhinweis schließen, ohne Punkt zu zählen"><div id="watchRestOverlayTitle">SEITENWECHSEL</div><strong id="watchRestOverlayTime">00:00</strong><small>Pause läuft</small></div><div class="watch-decision-overlay hidden" id="watchDecisionOverlay" role="button" tabindex="0" aria-label="Hinweis zum Entscheidungspunkt schließen">
+</div><div class="demo-splash" id="watchSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="watch-first-serve" id="watchFirstServe"><div class="watch-first-title" id="firstServeTitle">WER SCHLÄGT ZUERST AUF?</div><div class="watch-first-description" id="firstServeDescription">Zum Starten des Matches auswählen</div><button class="watch-first-choice" id="firstServeA" type="button">Spieler A</button><button class="watch-first-choice" id="firstServeB" type="button">Spieler B</button></div><div class="watch-setup hidden" id="watchSetup" aria-live="polite"><div class="watch-setup-step" id="setupStep">AUFSTELLUNG</div><div class="watch-setup-title" id="setupWatchTitle">Wer schlägt auf?</div><div class="watch-setup-perspective">Blickrichtung: zum Netz ↑</div><div class="watch-setup-choices"><button id="setupChoice0" class="watch-choice"></button><button id="setupChoice1" class="watch-choice"></button></div><button class="watch-setup-back" id="setupBack">↶ Zurück</button></div><div class="watch-rest-overlay hidden" id="watchRestOverlay" aria-live="polite" role="button" tabindex="0" aria-label="Pausenhinweis schließen, ohne Punkt zu zählen"><div id="watchRestOverlayTitle">SEITENWECHSEL</div><strong id="watchRestOverlayTime">00:00</strong><small>Pause läuft</small></div><div class="watch-decision-overlay hidden" id="watchDecisionOverlay" role="button" tabindex="0" aria-label="Hinweis zum Entscheidungspunkt schließen">
  <div class="watch-decision-heading">ENTSCHEIDUNGSPUNKT</div>
  <div class="watch-decision-message" id="watchDecisionMessage"></div>
  <div class="watch-decision-hint">Zum Schließen tippen</div>
@@ -618,7 +622,7 @@
     <button type="button" class="watch-menu-action wm-cancel" ><span class="wm-lang" data-de="Abbrechen" data-en="Cancel">Abbrechen</span><span aria-hidden="true">›</span></button>
   </div>
 </div><div class="watch-menu-toast" id="status" aria-live="polite"></div></div></div></section>
-<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="device-tabs"><button class="tab active" data-tab="settings">Einstellungen</button><button class="tab" data-tab="match">Match</button><button class="tab" data-tab="history">Verlauf</button></div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
+<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="device-tabs"><button class="tab active" data-tab="settings">Einstellungen</button><button class="tab" data-tab="match">Match</button><button class="tab" data-tab="history">Verlauf</button></div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
 <div class="phone-menu hidden" id="phoneMenu" role="dialog" aria-modal="true" aria-labelledby="phoneMenuTitle">
  <div class="phone-menu-head"><button type="button" id="phoneMenuBack" aria-label="Zurück">‹</button><strong id="phoneMenuTitle">Menü</strong><button type="button" id="phoneMenuClose" aria-label="Schließen">✕</button></div>
  <div class="phone-menu-content" id="phoneMenuContent"></div><p class="phone-menu-error hidden" id="phoneMenuError" role="alert"></p>
@@ -1882,10 +1886,24 @@ $('sets').addEventListener('change',modeFields);
 modeFields();document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));$('pointA').addEventListener('click',()=>point(0));$('pointB').addEventListener('click',()=>point(1));$('undo').addEventListener('click',undoAction);$('watchUndo').addEventListener('click',undoAction);$('phoneUndo').addEventListener('click',undoAction);$('setupChoice0').addEventListener('click',()=>chooseSetup(0));$('setupChoice1').addEventListener('click',()=>chooseSetup(1));$('setupBack').addEventListener('click',()=>{setupStage='server';renderSetup()});
 $('apply').addEventListener('click',()=>{if(!validMixedPlayers())return;if(state.pointCount&&!confirm('Laufendes Match verwerfen?'))return;watchConfigOpen=false;initConfig();fresh();switchTab('match')});initConfig();fresh();syncPhoneToWatch();
 renderWatchPlatform();
-document.querySelectorAll('.splash-brand').forEach(img=>{img.src=document.querySelector('.score-brand-image').src});
-const splashDelay=1100;
+const splashLogos=[...document.querySelectorAll('.splash-brand')];
+const splashSrc=document.querySelector('.score-brand-image').src;
+splashLogos.forEach(img=>{img.src=splashSrc});
 translateUI();
-setTimeout(()=>document.querySelectorAll('.demo-splash').forEach(el=>el.classList.add('hidden')),splashDelay);
+// Erst nach dem Dekodieren starten: keine ruckelnde Animation beim Bildaufbau.
+const reducedSplashMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const splashScreens=[...document.querySelectorAll('.demo-splash')];
+let splashStarted=false;
+function startSplashAnimation(){
+ if(splashStarted)return;
+ splashStarted=true;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  splashScreens.forEach(el=>el.classList.add('splash-ready'));
+  setTimeout(()=>splashScreens.forEach(el=>el.classList.add('hidden')),reducedSplashMotion?450:1900);
+ }));
+}
+Promise.all(splashLogos.map(img=>typeof img.decode==='function'?img.decode().catch(()=>{}):Promise.resolve())).then(startSplashAnimation);
+setTimeout(startSplashAnimation,2500);
 document.querySelectorAll('.demo-splash').forEach(el=>el.addEventListener('click',()=>el.classList.add('hidden')));
 setInterval(()=>{if(state&&!state.finished&&!state.awaitingServe){$('clock').textContent=elapsed();$('phoneTime').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable()}if(state&&state.rest)renderRest()},1000);
 })();
