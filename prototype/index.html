@@ -1444,9 +1444,18 @@ $('watchMenu').addEventListener('click',e=>{
   if(b.id==='correct')watchCorrectPrepare();else watchMenuNavigate('Reset');
   return;
  }
- if(b.id==='swapServe'){closeWatchMenu();return}
+ if(b.id==='swapServe'){
+  e.preventDefault();e.stopPropagation();
+  if(!state||state.awaitingServe){note('Bitte zuerst das Match starten');return}
+  if(state.finished){note('Match bereits beendet');return}
+  if(config.mode==='double'){note('Doppel-Aufschlag über die Satzaufstellung wählen');return}
+  snapshot();state.server=1-state.server;event('Aufschlag gewechselt');
+  closeWatchMenu();render();return;
+ }
  if(b.classList.contains('wm-config')){
-  closeWatchMenu();syncPhoneToWatch();$('watchConfigCancel').classList.remove('hidden');watchConfigOpen=true;render();return;
+  closeWatchMenu();
+  if(!watchConfigOpen){syncPhoneToWatch();$('watchConfigCancel').classList.remove('hidden');watchConfigOpen=true;render()}
+  return;
  }
  if(b.classList.contains('wm-legal'))watchMenuNavigate('Legal');
  else if(b.classList.contains('wm-imprint'))watchMenuNavigate('Imprint');
