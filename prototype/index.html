@@ -164,6 +164,28 @@
 .gender-choice span{font-size:9px;font-weight:800;color:#98b5cb}
 .field .gender-choice select{width:49px;min-width:49px;padding:7px 5px;font-size:12px;font-weight:900;text-align:center;border-color:#5282a0}
 #mixedGenderNote{margin:0 0 11px;font-size:11px;color:#c5d4e7}
+/* Smartphone: echte Team-Karten statt Spieler nebeneinander und Partner darunter. */
+.phone-team-explainer{font-size:11px;line-height:1.4;color:#b9d2e1;margin:0 0 12px}
+.phone-team-cards{display:flex;flex-direction:column;gap:12px;min-width:0;margin:0 0 12px}
+.phone-team-card{min-width:0;border-radius:15px;padding:12px 11px 3px;background:#17283a;border:1px solid #55718a;border-left:5px solid var(--team-accent)}
+.phone-team-card.team-a{--team-accent:#bcf75c;background:linear-gradient(120deg,#1b3028,#132738 85%);border-color:#527c48;border-left-color:var(--team-accent)}
+.phone-team-card.team-b{--team-accent:#7fd6f8;background:linear-gradient(120deg,#17344b,#142538 85%);border-color:#4b829c;border-left-color:var(--team-accent)}
+.phone-team-card-head{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.phone-team-card-head strong{color:var(--team-accent);font-size:15px;font-weight:950;letter-spacing:.05em}
+.phone-team-card-head span{color:#c2d5de;font-size:10px}
+.phone-team-card .field{min-width:0;margin:0 0 13px}
+.phone-team-card .field label{font-size:11px;font-weight:800;color:#e0ebf5}
+.phone-team-card .field input{display:block;width:100%;min-width:0;min-height:43px;padding:10px 11px;font-size:15px;border-color:#597085;border-radius:10px;text-overflow:clip}
+.phone-team-card .field input:focus{border-color:var(--team-accent)}
+.phone-gender-value{display:none!important}
+.phone-gender-row{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:8px}
+.phone-gender-caption{font-size:10px;font-weight:750;color:#c5d9e4}
+.phone-gender-buttons{display:flex;gap:5px}
+.phone-gender-btn{min-width:40px;min-height:32px;font-size:12px;font-weight:950;color:#e3f1fa;background:#142538;border:1px solid #668298;border-radius:8px}
+.phone-gender-btn.on{background:var(--team-accent);border-color:var(--team-accent);color:#11212c}
+.phone-gender-btn:disabled{opacity:1;cursor:default}
+.phone-teams-config #mixedGenderNote{margin:5px 0 12px}
+
 @media(max-width:420px){.config-section{padding-left:9px;padding-right:9px}.name-gender{flex-wrap:wrap}.gender-choice{width:100%;justify-content:flex-end}.gender-choice select{min-height:32px}}
 
 .watch-decision-overlay{position:absolute;inset:0;z-index:7;background:linear-gradient(155deg,#29415a,#101c2e 80%);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding:16px;cursor:pointer;touch-action:manipulation}
@@ -640,9 +662,55 @@
 </section>
 <div class="view" id="view-settings"><h3>Match konfigurieren</h3>
 <div class="config-section"><div class="field"><label for="mode">Spielart</label><select id="mode"><option value="single">Einzel</option><option value="double" selected>Doppel</option><option value="mixed">Mixed</option></select></div></div>
-<div class="config-section"><div class="config-section-title">Spieler / Teams</div><div class="two"><div class="field"><label for="playerA">Spieler A</label><div class="name-gender"><input id="playerA" value="Ich" maxlength="18"><div class="gender-choice hidden" data-gender-for="playerA"><span>M/W</span><select id="genderplayerA" aria-label="Geschlecht Spieler A"><option value="m" selected>M</option><option value="w">W</option></select></div></div></div><div class="field"><label for="playerB">Spieler B</label><div class="name-gender"><input id="playerB" value="Gegner" maxlength="18"><div class="gender-choice hidden" data-gender-for="playerB"><span>M/W</span><select id="genderplayerB" aria-label="Geschlecht Spieler B"><option value="m" selected>M</option><option value="w">W</option></select></div></div></div></div>
-<div class="two" id="doublePlayers"><div class="field"><label for="partnerA">Partner A</label><div class="name-gender"><input id="partnerA" value="Partner" maxlength="18"><div class="gender-choice hidden" data-gender-for="partnerA"><span>M/W</span><select id="genderpartnerA" aria-label="Geschlecht Partner A"><option value="m">M</option><option value="w" selected>W</option></select></div></div></div><div class="field"><label for="partnerB">Partner B</label><div class="name-gender"><input id="partnerB" value="Gegner 2" maxlength="18"><div class="gender-choice hidden" data-gender-for="partnerB"><span>M/W</span><select id="genderpartnerB" aria-label="Geschlecht Partner B"><option value="m">M</option><option value="w" selected>W</option></select></div></div></div></div>
-<p class="note hidden" id="mixedGenderNote">Für ein Mixed je Team einen Mann und eine Frau auswählen.</p></div>
+<div class="config-section phone-teams-config"><div class="config-section-title">Spieler / Teams</div><p class="phone-team-explainer">Jede farbige Karte ist ein Team. Die beiden Namen darin gehören zusammen.</p>
+<div class="phone-team-cards"><section class="phone-team-card team-a" aria-labelledby="phoneTeamATitle">
+ <div class="phone-team-card-head"><strong id="phoneTeamATitle">TEAM A</strong><span>Diese beiden spielen zusammen</span></div>
+ <div class="phone-team-players">
+  <div class="field"><label for="playerA">Spieler 1 · Team A</label><input id="playerA" value="Ich" maxlength="18" autocomplete="off"><div class="phone-gender-row hidden " data-gender-side="A" data-gender-role="main">
+  <span class="phone-gender-caption">Geschlecht auswählen</span>
+  <div class="phone-gender-buttons" role="group" aria-label="Geschlecht Spieler Team A">
+   <button type="button" class="phone-gender-btn" data-phone-gender="A:main:m" aria-pressed="false">M</button>
+   <button type="button" class="phone-gender-btn" data-phone-gender="A:main:w" aria-pressed="false">W</button>
+  </div>
+ </div>
+ <select id="genderplayerA" class="phone-gender-value" aria-label="Geschlecht Spieler Team A" tabindex="-1">
+  <option value="m" selected>M</option><option value="w">W</option>
+ </select></div>
+  <div class="field partner-field"><label for="partnerA">Spieler 2 · Team A (Partner)</label><input id="partnerA" value="Partner" maxlength="18" autocomplete="off"><div class="phone-gender-row hidden phone-auto-gender" data-gender-side="A" data-gender-role="partner">
+  <span class="phone-gender-caption">Partner · automatisch</span>
+  <div class="phone-gender-buttons" role="group" aria-label="Geschlecht Partner Team A">
+   <button type="button" class="phone-gender-btn" data-phone-gender="A:partner:m" aria-pressed="false" disabled>M</button>
+   <button type="button" class="phone-gender-btn" data-phone-gender="A:partner:w" aria-pressed="false" disabled>W</button>
+  </div>
+ </div>
+ <select id="genderpartnerA" class="phone-gender-value" aria-label="Geschlecht Partner Team A" tabindex="-1">
+  <option value="m">M</option><option value="w" selected>W</option>
+ </select></div>
+ </div></section><section class="phone-team-card team-b" aria-labelledby="phoneTeamBTitle">
+ <div class="phone-team-card-head"><strong id="phoneTeamBTitle">TEAM B</strong><span>Diese beiden spielen zusammen</span></div>
+ <div class="phone-team-players">
+  <div class="field"><label for="playerB">Spieler 1 · Team B</label><input id="playerB" value="Gegner" maxlength="18" autocomplete="off"><div class="phone-gender-row hidden " data-gender-side="B" data-gender-role="main">
+  <span class="phone-gender-caption">Geschlecht auswählen</span>
+  <div class="phone-gender-buttons" role="group" aria-label="Geschlecht Spieler Team B">
+   <button type="button" class="phone-gender-btn" data-phone-gender="B:main:m" aria-pressed="false">M</button>
+   <button type="button" class="phone-gender-btn" data-phone-gender="B:main:w" aria-pressed="false">W</button>
+  </div>
+ </div>
+ <select id="genderplayerB" class="phone-gender-value" aria-label="Geschlecht Spieler Team B" tabindex="-1">
+  <option value="m" selected>M</option><option value="w">W</option>
+ </select></div>
+  <div class="field partner-field"><label for="partnerB">Spieler 2 · Team B (Partner)</label><input id="partnerB" value="Gegner 2" maxlength="18" autocomplete="off"><div class="phone-gender-row hidden phone-auto-gender" data-gender-side="B" data-gender-role="partner">
+  <span class="phone-gender-caption">Partner · automatisch</span>
+  <div class="phone-gender-buttons" role="group" aria-label="Geschlecht Partner Team B">
+   <button type="button" class="phone-gender-btn" data-phone-gender="B:partner:m" aria-pressed="false" disabled>M</button>
+   <button type="button" class="phone-gender-btn" data-phone-gender="B:partner:w" aria-pressed="false" disabled>W</button>
+  </div>
+ </div>
+ <select id="genderpartnerB" class="phone-gender-value" aria-label="Geschlecht Partner Team B" tabindex="-1">
+  <option value="m">M</option><option value="w" selected>W</option>
+ </select></div>
+ </div></section></div>
+<p class="note hidden" id="mixedGenderNote">Für ein Mixed wird das Geschlecht des Partners automatisch ergänzt.</p></div>
 <div class="config-section"><div class="config-section-title">Matchformat</div><div class="two">
 <div class="field"><label for="sets">Matchformat</label><select id="sets"><option value="3">2 Gewinnsätze</option><option value="1">1 Satz</option><option value="5">3 Gewinnsätze</option></select></div>
 <div class="field"><label for="games">Spiele pro Satz</label><select id="games"><option value="6">6 Spiele</option><option value="4">4 Spiele</option></select></div>
@@ -1878,13 +1946,34 @@ function switchTab(t){
 }
 function modeFields(){
  const doubles=$('mode').value!=='single',mixed=$('mode').value==='mixed';
- $('doublePlayers').classList.toggle('hidden',!doubles);
+ document.querySelectorAll('.partner-field').forEach(el=>el.classList.toggle('hidden',!doubles));
  $('finalsetField').classList.toggle('hidden',Number($('sets').value)===1);
  $('mixedGenderNote').classList.toggle('hidden',!mixed);
- document.querySelectorAll('.gender-choice').forEach(el=>el.classList.toggle('hidden',!mixed));
- document.querySelector('label[for="playerA"]').textContent=doubles?'Spieler A · Team A':'Spieler A';
- document.querySelector('label[for="playerB"]').textContent=doubles?'Spieler B · Team B':'Spieler B';
+ document.querySelectorAll('.phone-gender-row').forEach(el=>el.classList.toggle('hidden',!mixed));
+ document.querySelectorAll('.phone-team-card-head span').forEach(el=>el.classList.toggle('hidden',!doubles));
+ document.querySelector('label[for="playerA"]').textContent=doubles?'Spieler 1 · Team A':'Spieler · Team A';
+ document.querySelector('label[for="playerB"]').textContent=doubles?'Spieler 1 · Team B':'Spieler · Team B';
+ renderPhoneGenderSelections();
 }
+function renderPhoneGenderSelections(){
+ for(const side of ['A','B']){
+  const first=$('genderplayer'+side).value;
+  const partner=first==='m'?'w':'m';
+  $('genderpartner'+side).value=partner;
+  document.querySelectorAll('[data-phone-gender^="'+side+':"]').forEach(btn=>{
+   const [,role,gender]=btn.dataset.phoneGender.split(':');
+   const on=gender===(role==='main'?first:partner);
+   btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',String(on));
+  });
+ }
+}
+document.querySelector('.phone-team-cards').addEventListener('click',e=>{
+ const btn=e.target.closest('[data-phone-gender]');if(!btn||btn.disabled)return;
+ const [side,role,gender]=btn.dataset.phoneGender.split(':');
+ if(role!=='main')return;
+ $('genderplayer'+side).value=gender;
+ renderPhoneGenderSelections();
+});
 function validMixedPlayers(){
  if($('mode').value!=='mixed')return true;
  if($('genderplayerA').value===$('genderpartnerA').value||$('genderplayerB').value===$('genderpartnerB').value){
