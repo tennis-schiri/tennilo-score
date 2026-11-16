@@ -868,6 +868,7 @@ function setDemoLanguage(next){
  renderWatchPlatform();
  if(typeof watchMenuLang==='function')watchMenuLang();
  if(typeof refreshPhoneMenu==='function'&&phoneMenuOpen)refreshPhoneMenu();
+ if(typeof updatePhoneLiveLabels==='function')updatePhoneLiveLabels();
 }
 function toggleDemoLanguage(){setDemoLanguage(demoLang==='de'?'en':'de')}
 
@@ -1267,6 +1268,12 @@ function formatDuration(ms){
  return hours?hours+':'+String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0'):
  String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
 }
+function updatePhoneLiveLabels(){
+ if(!state)return;
+ $('phoneLiveTitle').textContent=demoLang==='en'?'LIVE SCORE':'LIVE-SPIELSTAND';
+ $('phoneLiveStatus').textContent=state.finished?(retirementActive()?'RET':demoLang==='en'?'FINISHED':'BEENDET'):
+  state.awaitingServe?(demoLang==='en'?'SETUP':'VORBEREITUNG'):'● LIVE';
+}
 function phoneScoreTable(){
  const columns=Math.max(config.sets,state.completed.length+(hasActiveSet()?1:0));
  const isTBColumn=i=>state.completedTB[i]==='mtb'||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&hasActiveSet()&&state.tb);
@@ -1363,9 +1370,7 @@ function render(){if(!state)return;$('watchConfiguration').classList.toggle('hid
  }$('scoreA').textContent=p[0];$('scoreB').textContent=p[1];const side=serveSide(),serveLabel='🎾'+(side?' · '+side:'');$('serveA').textContent=config.mode==='double'?'':server===0&&!state.finished?serveLabel:' ';$('serveB').textContent=config.mode==='double'?'':server===1&&!state.finished?serveLabel:' ';$('sideHint').textContent=state.sideChange&&!state.finished?'↔ SEITENWECHSEL':'';const phase=phaseLabel(),phaseEl=$('matchphase');
  phaseEl.textContent=phase;
  phaseEl.className=phase.startsWith('MATCHBALL')?'phase-alert phase-matchball':phase.startsWith('SATZBALL')?'phase-alert phase-setball':phase.startsWith('EINSTAND')?'phase-alert phase-deuce':phase.startsWith('NO-AD')?'phase-alert phase-noad':'phase-default';renderRest();$('setline').innerHTML=watchSetTable();$('clock').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable();
- $('phoneLiveTitle').textContent=demoLang==='en'?'LIVE SCORE':'LIVE-SPIELSTAND';
- $('phoneLiveStatus').textContent=state.finished?(retirementActive()?'RET':demoLang==='en'?'FINISHED':'BEENDET'):
-  state.awaitingServe?(demoLang==='en'?'SETUP':'VORBEREITUNG'):'● LIVE';
+ updatePhoneLiveLabels();
  $('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();renderStats();renderHistory()}
 $('historySetTabs').addEventListener('click',e=>{const b=e.target.closest('[data-history-set]');if(!b)return;selectedHistorySet=Number(b.dataset.historySet);renderHistory()});
 $('watchDecisionOverlay').addEventListener('click',e=>{
