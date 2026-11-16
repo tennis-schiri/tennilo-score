@@ -1443,20 +1443,24 @@ let watchMenuScreen='Root';
 function watchMenuLang(){
  document.querySelectorAll('#watchMenu .wm-lang').forEach(el=>{el.textContent=el.dataset[demoLang==='en'?'en':'de']});
  document.querySelectorAll('#watchMenu a[data-en-url]').forEach(el=>{el.href=demoLang==='en'?el.dataset.enUrl:el.href.replace('/en/imprint.html','/impressum.html').replace('/en/privacy.html','/datenschutz.html')});
- if(!$('watchMenu').classList.contains('hidden'))watchMenuNavigate(watchMenuScreen);
+ if(!$('watchMenu').classList.contains('hidden')){
+  watchMenuNavigate(watchMenuScreen);
+  if(watchMenuScreen==='RetirementConfirm')renderRetirementConfirmation();
+ }
 }
 function openWatchMenu(){watchMenuNavigate('Root');$('watchMenu').classList.remove('hidden');watchMenuLang()}
 function closeWatchMenu(){$('watchMenu').classList.add('hidden')}
 function watchMenuNavigate(screen){
  watchMenuScreen=screen;
- for(const key of ['Root','Legal','Imprint','Privacy','Notice','About','Correction','Reset'])$('watchMenu'+key).classList.toggle('hidden',key!==screen);
- const titles={Root:['Menü','Menu'],Legal:['Rechtliches','Legal'],Imprint:['Impressum','Imprint'],Privacy:['Datenschutz','Privacy'],Notice:['Testhinweise','Demo notices'],About:['Über die Demo','About the demo'],Correction:['Spielstand korrigieren','Correct score'],Reset:['Neues Match?','New match?']};
+ for(const key of ['Root','Legal','Imprint','Privacy','Notice','About','Correction','Reset','Retirement','RetirementConfirm'])$('watchMenu'+key).classList.toggle('hidden',key!==screen);
+ const titles={Root:['Menü','Menu'],Legal:['Rechtliches','Legal'],Imprint:['Impressum','Imprint'],Privacy:['Datenschutz','Privacy'],Notice:['Testhinweise','Demo notices'],About:['Über die Demo','About the demo'],Correction:['Spielstand korrigieren','Correct score'],Reset:['Neues Match?','New match?'],Retirement:['Aufgabe','Retirement'],RetirementConfirm:['Aufgabe bestätigen','Confirm retirement']};
  $('watchMenuTitle').textContent=titles[screen][demoLang==='en'?1:0];
  $('watchMenuBack').style.visibility=screen==='Root'?'hidden':'visible';
  $('watchMenu').scrollTop=0;
 }
 function watchMenuBack(){
  if(['Imprint','Privacy','Notice'].includes(watchMenuScreen))watchMenuNavigate('Legal');
+ else if(watchMenuScreen==='RetirementConfirm')watchMenuNavigate('Retirement');
  else if(watchMenuScreen==='Root')closeWatchMenu();
  else watchMenuNavigate('Root');
 }
@@ -1487,14 +1491,46 @@ $('watchMenuSetupGear').addEventListener('click',openWatchMenu);
 $('watchMenuClose').addEventListener('click',closeWatchMenu);
 $('watchMenuBack').addEventListener('click',watchMenuBack);
 $('watchFixSave').addEventListener('click',watchCorrectApply);
+let selectedRetiringTeam=null;
+function watchRetirePrepare(){
+ if(!state||state.awaitingServe){note('Bitte zuerst Match starten');return}
+ if(state.finished){note('Match bereits beendet');return}
+ $('watchRetireNameA').textContent=teamDisplayName(0);
+ $('watchRetireNameB').textContent=teamDisplayName(1);
+ selectedRetiringTeam=null;
+ watchMenuNavigate('Retirement');
+}
+function renderRetirementConfirmation(){
+ if(selectedRetiringTeam!==0&&selectedRetiringTeam!==1)return;
+ const loser=teamDisplayName(selectedRetiringTeam),winner=teamDisplayName(1-selectedRetiringTeam);
+ const score=[...state.completed.map((set,i)=>set.join(':')+(state.completedTB[i]==='mtb'?' (MTB)':'')),
+  (state.mtb?state.points:state.games).join(':')+(state.mtb?' (MTB)':state.tb?' (TB)':'')].join(' · ');
+ $('watchRetireConfirmation').textContent=demoLang==='en'?
+  loser+' retires. '+winner+' wins by retirement. The score ('+score+') stays as played. Confirm?':
+  loser+' gibt auf. '+winner+' gewinnt durch Aufgabe. Der bisherige Spielstand ('+score+') bleibt erhalten. Wirklich beenden?';
+}
+function watchRetireSelect(team){
+ if(!state||state.finished||state.awaitingServe)return;
+ selectedRetiringTeam=team;
+ renderRetirementConfirmation();
+ watchMenuNavigate('RetirementConfirm');
+}
+$('watchRetireTeamA').addEventListener('click',()=>watchRetireSelect(0));
+$('watchRetireTeamB').addEventListener('click',()=>watchRetireSelect(1));
+$('watchRetireCancel').addEventListener('click',()=>watchMenuNavigate('Retirement'));
+$('watchRetireConfirm').addEventListener('click',()=>{
+ if(selectedRetiringTeam!==0&&selectedRetiringTeam!==1)return;
+ const accepted=retireMatch(selectedRetiringTeam);
+ if(accepted){selectedRetiringTeam=null;closeWatchMenu();render()}
+});
 $('watchConfirmReset').addEventListener('click',()=>{
  closeWatchMenu();watchConfigOpen=true;syncPhoneToWatch();$('watchConfigCancel').classList.remove('hidden');render();
 });
 $('watchMenu').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
- if(b.id==='correct'||b.id==='reset'){
+ if(b.id==='correct'||b.id==='reset'||b.id==='watchRetireMenu'){
   e.preventDefault();e.stopPropagation();
-  if(b.id==='correct')watchCorrectPrepare();else watchMenuNavigate('Reset');
+  if(b.id==='correct')watchCorrectPrepare();else if(b.id==='watchRetireMenu')watchRetirePrepare();else watchMenuNavigate('Reset');
   return;
  }
  if(b.id==='swapServe'){
