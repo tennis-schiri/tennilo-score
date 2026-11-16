@@ -478,14 +478,17 @@
  white-space:normal;overflow-wrap:anywhere;word-break:normal}
 .phone-live-score .phone-score-grid .phone-sets-won{font-size:12px;font-weight:950;white-space:nowrap}
 .phone-live-score .phone-score-grid .phone-set-num{padding:5px 1px;font-size:14px;font-weight:950;line-height:1.05}
+/* TB-Punkte direkt rechts oben am Satzstand, auch bei fünf Sätzen ohne Seiten-Scrollen. */
 .phone-live-score .phone-score-grid .phone-set-score,
-.phone-live-score .phone-score-grid .phone-set-score:has(sup){display:inline-flex;flex-direction:column;justify-content:center;
- align-items:center;gap:0;width:100%;min-width:0;max-width:100%;white-space:nowrap}
+.phone-live-score .phone-score-grid .phone-set-score:has(sup){display:inline-flex;flex-direction:row;align-items:baseline;justify-content:center;
+ gap:1px;width:100%;min-width:0;max-width:100%;white-space:nowrap}
 .phone-live-score .phone-score-grid .phone-set-score .set-score-main,
-.phone-live-score .phone-score-grid .phone-set-score:has(sup) .set-score-main{display:block;min-width:0;width:auto;text-align:center;line-height:1.08}
+.phone-live-score .phone-score-grid .phone-set-score:has(sup) .set-score-main{display:inline-block;flex:0 1 auto;min-width:0;width:auto;text-align:center;line-height:1.08}
 .phone-live-score .phone-score-grid .phone-set-score sup,
-.phone-live-score .phone-score-grid .phone-set-score:has(sup) sup{display:block;position:static;transform:none;width:auto;max-width:100%;
- margin:1px 0 0;font-size:8px;line-height:1;color:#7fd6f8}
+.phone-live-score .phone-score-grid .phone-set-score:has(sup) sup{display:inline-block;position:relative;top:-.42em;transform:none;flex:0 0 auto;width:auto;min-width:0;
+ max-width:100%;margin:0;font-size:8px;line-height:1;color:#7fd6f8}
+.phone-live-score .phone-score-grid .phone-team-name .phone-team-player{display:block;min-width:0;overflow-wrap:anywhere;line-height:1.18}
+.phone-live-score .phone-score-grid .phone-team-name .phone-team-player+.phone-team-player{margin-top:3px;padding-top:3px;border-top:1px solid #5c78904d;color:#c7d8e8}
 .phone-live-score .phone-score-grid thead th small{font-size:7px;line-height:1.1;margin-top:1px}
 .phone-live-score .phone-score-grid .phone-duration-row th{font-size:9px;text-align:left;padding-left:4px}
 .phone-live-score .phone-score-grid .phone-duration-row td{padding:5px 0;font-size:8px;letter-spacing:-.05em;white-space:nowrap;overflow:hidden}
@@ -1454,7 +1457,10 @@ function phoneScoreTable(){
   return '<th scope="col"><span>'+(i+1)+'</span>'+(tb?'<small>'+ (mtb?'MTB':'TB') +'</small>':'')+'</th>';
  }).join('');
  const rows=[0,1].map(team=>{
-  const name=config.mode==='double'?config.names[team]+' / '+config.partners[team]:config.names[team];
+  const name=teamDisplayName(team);
+  const nameHtml=config.mode==='double'
+   ?'<span class="phone-team-player">'+esc(config.names[team])+'</span><span class="phone-team-player">'+esc(config.partners[team])+'</span>'
+   :'<span class="phone-team-player">'+esc(config.names[team])+'</span>';
   const cells=Array.from({length:columns},(_,i)=>{
    const complete=state.completed[i],isCurrent=i===state.completed.length&&hasActiveSet();
    const value=complete?complete[team]:isCurrent?(state.mtb?state.points[team]:state.games[team]):'–';
@@ -1464,7 +1470,7 @@ function phoneScoreTable(){
    const style=complete?(winner?' phone-set-won':' phone-set-lost'):isCurrent?' phone-set-current':' phone-set-empty';
    return '<td class="phone-set-num'+style+'"><span class="phone-set-score"><span class="set-score-main">'+esc(value)+'</span>'+loserTB+'</span></td>';
   }).join('');
-  return '<tr><th scope="row" class="phone-team-name" title="'+esc(name)+'">'+esc(name)+'</th>'+
+  return '<tr><th scope="row" class="phone-team-name" title="'+esc(name)+'">'+nameHtml+'</th>'+
    '<td class="phone-sets-won">'+(state.finished?'–':esc(displayPoints()[team]))+'</td>'+cells+'</tr>';
  }).join('');
  const times=Array.from({length:columns},(_,i)=>{
