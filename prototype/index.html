@@ -994,7 +994,7 @@ function renderStats(){
 }
 function renderHistory(){
  const entries=events.filter(e=>e.details&&Number.isInteger(e.details.setIndex)).reverse();
- const current=state.finished?Math.max(0,state.completed.length-1):state.completed.length;
+ const current=state.finished&&!retirementActive()?Math.max(0,state.completed.length-1):state.completed.length;
  const count=Math.max(current+1,...entries.map(e=>e.details.setIndex+1));
  const active=selectedHistorySet===null?current:Math.min(selectedHistorySet,count-1);
  $('historySetTabs').innerHTML=Array.from({length:count},(_,i)=>
@@ -1007,7 +1007,10 @@ function renderHistory(){
   if(!byKey.has(key)){const g={gameIndex:d.gameIndex,tb:d.tb,mtb:d.mtb,points:[]};byKey.set(key,g);groups.push(g)}
   byKey.get(key).points.push(e);
  }
- $('historyList').innerHTML=groups.length?groups.map(historyGameCard).join(''):'<p class="history-empty">In diesem Satz wurden noch keine Punkte eingetragen.</p>';
+ const body=groups.length?groups.map(historyGameCard).join(''):'<p class="history-empty">In diesem Satz wurden noch keine Punkte eingetragen.</p>';
+ const retirementNote=retirementActive()&&active===state.completed.length?
+  '<div class="history-retirement-note">RET · Aufgabe: '+esc(teamDisplayName(state.retiredBy))+' · Sieger durch Aufgabe: '+esc(teamDisplayName(state.winner))+' · '+esc(retirementScore())+'</div>':'';
+ $('historyList').innerHTML=body+retirementNote;
 }
 function isFinal(){return config.sets>1&&state.sets[0]===Math.floor(config.sets/2)&&state.sets[1]===Math.floor(config.sets/2)}
 function currentGame(){return state.games[0]+state.games[1]}
@@ -1095,7 +1098,7 @@ function matchBallFor(team){
  return setBallFor(team)&&state.sets[team]+1>=Math.floor(config.sets/2)+1;
 }
 function phaseLabel(){
- if(state.finished)return 'MATCH BEENDET';
+ if(state.finished)return retirementActive()?'MATCH BEENDET · AUFGABE':'MATCH BEENDET';
  if(state.setupPending)return 'AUFSTELLUNG FESTLEGEN';
  const match=[0,1].filter(matchBallFor);
  if(match.length)return match.length===2?'MATCHBALL '+match.map(t=>'#'+(state.matchBallCount[t]+1)+' '+(t===0?'A':'B')).join(' / '):'MATCHBALL #'+(state.matchBallCount[match[0]]+1);
@@ -1142,8 +1145,8 @@ function point(w){if(watchConfigOpen)return;if(state.decisionBanner&&Date.now()<
  }
  if(config.mode==='double'&&config.deuce==='noad'&&!state.tb&&!state.finished&&!state.setupPending&&state.points[0]===3&&state.points[1]===3)showDecisionBanner();
  if(state.mtb&&config.mode==='double'&&!state.finished&&state.setupCount===1&&state.points[0]+state.points[1]===1){state.server=1-state.tbFirstServer;requestSetup()}render()}
-function displayPoints(){if(state.tb||(state.finished&&state.completedTB[state.completedTB.length-1]==='mtb'))return state.points.map(String);if(state.finished)return ['–','–'];let p=state.points;if(Math.max(...p)===4)return p.map(x=>x===4?'AD':x===3?'40':['0','15','30','40'][x]);return p.map(x=>['0','15','30','40'][Math.min(x,3)])}
-function scoreParts(){const parts=state.completed.map((set,i)=>({text:set.join(':')+(state.completedTB[i]==='mtb'?' (MTB)':Number.isInteger(state.completedTB[i])?' ('+state.completedTB[i]+')':''),kind:set[0]>set[1]?'won':'lost'}));if(!state.finished||!parts.length)parts.push({text:state.mtb?state.points.join(':')+' (MTB)':state.games.join(':'),kind:'current'});return parts}
+function displayPoints(){if(retirementActive())return state.tb?state.points.map(String):state.points.map(x=>['0','15','30','40','AD'][Math.min(4,x)]);if(state.tb||(state.finished&&state.completedTB[state.completedTB.length-1]==='mtb'))return state.points.map(String);if(state.finished)return ['–','–'];let p=state.points;if(Math.max(...p)===4)return p.map(x=>x===4?'AD':x===3?'40':['0','15','30','40'][x]);return p.map(x=>['0','15','30','40'][Math.min(x,3)])}
+function scoreParts(){const parts=state.completed.map((set,i)=>({text:set.join(':')+(state.completedTB[i]==='mtb'?' (MTB)':Number.isInteger(state.completedTB[i])?' ('+state.completedTB[i]+')':''),kind:set[0]>set[1]?'won':'lost'}));if(hasActiveSet()||!parts.length)parts.push({text:state.mtb?state.points.join(':')+' (MTB)':state.games.join(':'),kind:'current'});return parts}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function coloredScoreline(){return scoreParts().map(x=>'<span class="set-'+x.kind+'">'+esc(x.text)+'</span>').join('<span class="set-separator"> - </span>')}
 function tbPointsForSet(index,team){
@@ -1153,17 +1156,17 @@ function tbPointsForSet(index,team){
   const loser=completed[0]>completed[1]?1:0;
   return team===loser?result:Math.max(config.tb,result+2);
  }
- if(!completed&&index===state.completed.length&&!state.finished&&state.tb&&!state.mtb)return state.points[team];
+ if(!completed&&index===state.completed.length&&hasActiveSet()&&state.tb&&!state.mtb)return state.points[team];
  return null;
 }
 function watchSetTable(){
- const cols=Math.max(1,config.sets,state.completed.length+(state.finished?0:1));
+ const cols=Math.max(1,config.sets,state.completed.length+(hasActiveSet()?1:0));
  const compact=cols>=5?' compact':'';
- const widths=Array.from({length:cols},(_,i)=>state.completedTB[i]==='mtb'||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&!state.finished&&state.tb)?'41px':'23px').join(' ');
+ const widths=Array.from({length:cols},(_,i)=>state.completedTB[i]==='mtb'||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&hasActiveSet()&&state.tb)?'41px':'23px').join(' ');
  const header='<div class="watch-set-cell watch-set-label"></div>'+
  Array.from({length:cols},(_,i)=>{
   const finishedTB=state.completedTB[i]==='mtb'||Number.isInteger(state.completedTB[i]);
-  const liveTB=i===state.completed.length&&!state.finished&&state.tb;
+  const liveTB=i===state.completed.length&&hasActiveSet()&&state.tb;
   const isMTB=state.completedTB[i]==='mtb'||(liveTB&&state.mtb);
   const marker=isMTB?'MTB':finishedTB||liveTB?'TB':'';
   return '<div class="watch-set-cell watch-set-col" title="'+(marker?('Satz '+(i+1)+' · '+marker):('Satz '+(i+1)))+'">'+
@@ -1171,7 +1174,7 @@ function watchSetTable(){
  }).join('');
  const rows=[0,1].map(team=>{
   const values=Array.from({length:cols},(_,i)=>{
-   const complete=state.completed[i],current=i===state.completed.length&&!state.finished;
+   const complete=state.completed[i],current=i===state.completed.length&&hasActiveSet();
    const value=complete?complete[team]:current?(state.mtb?state.points[team]:state.games[team]):'–';
    const win=complete&&complete[team]>complete[1-team];
    const cls=complete?(win?' watch-set-win':' watch-set-loss'):current?' watch-set-current':' watch-set-empty';
@@ -1191,19 +1194,19 @@ function formatDuration(ms){
  String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
 }
 function phoneScoreTable(){
- const columns=Math.max(config.sets,state.completed.length+(state.finished?0:1));
- const isTBColumn=i=>state.completedTB[i]==='mtb'||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&!state.finished&&state.tb);
+ const columns=Math.max(config.sets,state.completed.length+(hasActiveSet()?1:0));
+ const isTBColumn=i=>state.completedTB[i]==='mtb'||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&hasActiveSet()&&state.tb);
  const minWidth=130+66+Array.from({length:columns},(_,i)=>isTBColumn(i)?59:39).reduce((a,b)=>a+b,0);
  const colgroup='<colgroup><col style="width:130px"><col style="width:66px">'+Array.from({length:columns},(_,i)=>'<col style="width:'+(isTBColumn(i)?51:39)+'px">').join('')+'</colgroup>';
  const headers=Array.from({length:columns},(_,i)=>{
-  const mtb=state.completedTB[i]==='mtb'||(i===state.completed.length&&!state.finished&&state.mtb);
-  const tb=mtb||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&!state.finished&&state.tb);
+  const mtb=state.completedTB[i]==='mtb'||(i===state.completed.length&&hasActiveSet()&&state.mtb);
+  const tb=mtb||Number.isInteger(state.completedTB[i])||(i===state.completed.length&&hasActiveSet()&&state.tb);
   return '<th scope="col"><span>'+(i+1)+'</span>'+(tb?'<small>'+ (mtb?'MTB':'TB') +'</small>':'')+'</th>';
  }).join('');
  const rows=[0,1].map(team=>{
   const name=config.mode==='double'?config.names[team]+' / '+config.partners[team]:config.names[team];
   const cells=Array.from({length:columns},(_,i)=>{
-   const complete=state.completed[i],isCurrent=i===state.completed.length&&!state.finished;
+   const complete=state.completed[i],isCurrent=i===state.completed.length&&hasActiveSet();
    const value=complete?complete[team]:isCurrent?(state.mtb?state.points[team]:state.games[team]):'–';
    const winner=complete&&complete[team]>complete[1-team];
    const tbPoints=tbPointsForSet(i,team);
@@ -1215,13 +1218,14 @@ function phoneScoreTable(){
    '<td class="phone-sets-won">'+(state.finished?'–':esc(displayPoints()[team]))+'</td>'+cells+'</tr>';
  }).join('');
  const times=Array.from({length:columns},(_,i)=>{
- const complete=state.setDurations[i],isCurrent=i===state.completed.length&&!state.finished&&!state.awaitingServe;
- const ms=complete!==undefined?complete:isCurrent?Date.now()-(state.setStartedAt||started):null;
+ const complete=state.setDurations[i],isCurrent=i===state.completed.length&&hasActiveSet()&&!state.awaitingServe;
+ const ms=complete!==undefined?complete:isCurrent?(state.matchEndedAt||Date.now())-(state.setStartedAt||started):null;
  return '<td class="phone-set-duration">'+(ms===null?'–':formatDuration(ms))+'</td>';
 }).join('');
 const matchDuration=state.awaitingServe?'00:00':formatDuration((state.matchEndedAt||Date.now())-started);
 return '<div class="phone-score-scroll"><table class="phone-score-grid" style="min-width:'+minWidth+'px">'+colgroup+'<thead><tr><th scope="col" class="phone-team-heading">SPIELER / TEAM</th><th scope="col" title="Aktueller Punktestand im Spiel">E</th>'+headers+'</tr></thead><tbody>'+rows+
-'<tr class="phone-duration-row"><th scope="row">Dauer</th><td class="phone-match-total"><strong>'+matchDuration+'</strong></td>'+times+'</tr></tbody></table></div>';
+'<tr class="phone-duration-row"><th scope="row">Dauer</th><td class="phone-match-total"><strong>'+matchDuration+'</strong></td>'+times+'</tr></tbody></table></div>'+
+ (retirementActive()?'<div class="phone-retirement-note">RET · Aufgabe: '+esc(teamDisplayName(state.retiredBy))+' · Sieger durch Aufgabe: '+esc(teamDisplayName(state.winner))+'</div>':'');
 '';
 }
 function returner(){if(config.mode!=='double')return null;let team=1-servingTeam(),right=state.receiveDeuce[team];if(!right)return null;let idx=Number(right.split(':')[1]);let noAd=config.deuce==='noad'&&!state.tb&&state.points[0]===3&&state.points[1]===3;if(noAd&&config.mixed){let serv=currentServer();if(!serv)return null;let servMale=Number(serv.split(':')[1])===config.men[servingTeam()];return playerKey(team,servMale?config.men[team]:1-config.men[team])}let n=state.tb?state.points[0]+state.points[1]:state.points[0]+state.points[1];return playerKey(team,n%2===0?idx:1-idx)}
@@ -1250,6 +1254,7 @@ function playerSymbol(name,symbol,side){
  return side==='LINKS'?symbol+' '+safe:safe+' '+symbol;
 }
 function finalMatchScore(){
+ if(retirementActive())return retirementScore()+' · RET';
  return state.completed.map((set,i)=>{
   if(state.completedTB[i]==='mtb')return set.join(':')+' MTB';
   const tb=state.completedTB[i];
@@ -1263,7 +1268,9 @@ function renderFinish(){
  if(!active)return;
  const w=state.winner;
  $('watchFinishWinner').textContent=config.mode==='double'?config.names[w]+' / '+config.partners[w]:config.names[w];
- $('watchFinishResult').textContent=finalMatchScore();
+ $('watchFinishReason').classList.toggle('hidden',!retirementActive());
+ $('watchFinishReason').textContent=retirementActive()?'Aufgabe: '+teamDisplayName(state.retiredBy):'';
+ $('watchFinishResult').textContent=retirementActive()?'Spielstand bei Aufgabe: '+finalMatchScore():finalMatchScore();
  $('watchFinishDuration').textContent='Spieldauer '+formatDuration((state.matchEndedAt||Date.now())-started);
 }
 function render(){if(!state)return;$('watchConfiguration').classList.toggle('hidden',!watchConfigOpen);renderDecisionBanner();renderFinish();$('watchFirstServe').classList.toggle('hidden',!state.awaitingServe);$('firstServeA').textContent=config.names[0];$('firstServeB').textContent=config.names[1];renderSetup();let p=displayPoints(),server=servingTeam(),serv=currentServer(),noAd=config.deuce==='noad'&&!state.tb&&!state.finished&&state.points.every(x=>x===3);if(config.mode==='double'&&!state.setupPending&&!state.finished){
@@ -1470,7 +1477,7 @@ function watchCorrectApply(){
   note('Ungültige Eingabe');return;
  }
  snapshot();state.games=games;state.points=points;state.server=server;
- state.finished=false;state.winner=null;state.finishDismissed=false;state.matchEndedAt=null;
+ state.finished=false;state.winner=null;state.finishDismissed=false;state.matchEndedAt=null;state.finishReason=null;state.retiredBy=null;
  state.tb=games.every(n=>n===config.games);state.mtb=false;
  state.tbFirstServer=state.tb?server:null;state.sideChange=false;
  event('Spielstand korrigiert');
