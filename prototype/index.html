@@ -937,6 +937,7 @@ const DEMO_TRANSLATIONS = [
  ['Tiebreak beginnt','Tiebreak starts'],
  ['Tiebreak beendet','Tiebreak finished'],
  ['Match-Tiebreak beendet','Match tiebreak finished'],
+ ['gewinnen das Match','win the match'],
  ['gewinnt das Match','wins the match'],
  ['Spielstand korrigiert','Score corrected'],
  ['Satz beendet','Set finished'],
@@ -1320,7 +1321,7 @@ function chooseSetup(index){
  render();
 }
 function beginNewSet(){state.games=[0,0];state.points=[0,0];state.deuceCount=0;state.setBallCount=[0,0];state.tb=false;state.mtb=false;state.tbStart=0;state.serveOrder=[];state.receiveDeuce=[null,null];state.setupCount=0;state.setupPending=false;if(config.finalset==='mtb'&&isFinal()){state.mtb=true;state.tb=true;state.tbFirstServer=state.server;event('Match-Tiebreak beginnt')}if(!state.finished&&config.mode==='double')requestSetup()}
-function setWinner(w,tbLoser=null){state.setDurations.push(Math.max(0,Date.now()-(state.setStartedAt||started)));let wasMTB=state.mtb;state.completed.push(wasMTB?[...state.points]:[...state.games]);state.completedTB.push(wasMTB?'mtb':tbLoser);state.sets[w]++;if(state.sets[w]>=Math.floor(config.sets/2)+1){state.finished=true;state.winner=w;state.matchEndedAt=Date.now();state.finishDismissed=false;state.tb=false;state.mtb=false;event(teamDisplayName(w)+' gewinnt das Match')}else{state.setStartedAt=Date.now();beginNewSet()}}
+function setWinner(w,tbLoser=null){state.setDurations.push(Math.max(0,Date.now()-(state.setStartedAt||started)));let wasMTB=state.mtb;state.completed.push(wasMTB?[...state.points]:[...state.games]);state.completedTB.push(wasMTB?'mtb':tbLoser);state.sets[w]++;if(state.sets[w]>=Math.floor(config.sets/2)+1){state.finished=true;state.winner=w;state.matchEndedAt=Date.now();state.finishDismissed=false;state.tb=false;state.mtb=false;event(teamDisplayName(w)+(config.mode==='double'?' gewinnen das Match':' gewinnt das Match'))}else{state.setStartedAt=Date.now();beginNewSet()}}
 function gameWinner(w){state.deuceCount=0;const oldServer=servingTeam();state.games[w]++;state.points=[0,0];state.server=1-oldServer;state.sideChange=currentGame()%2===1;event('Spiel für '+teamDisplayName(w));let target=config.games,a=state.games[w],b=state.games[1-w];if(a>=target&&a-b>=2){event('Satz für '+teamDisplayName(w));setWinner(w)}else if(a===target&&b===target){state.tb=true;state.tbStart=currentGame()%4;state.tbFirstServer=oldServer===0?1:0;event('Tiebreak beginnt')}else if(config.mode==='double'&&state.setupCount<2)requestSetup()}
 // A set/match ball exists only when the NEXT point would actually finish the set.
 function gameWinsWithNextPoint(team){
