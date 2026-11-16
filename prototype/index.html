@@ -1445,7 +1445,7 @@ function render(){if(!state)return;$('watchConfiguration').classList.toggle('hid
   const key=config.mode==='double'?(isServing?serv:returner()):null;
   const name=config.mode==='double'&&active?(key?nameOf(key):config.names[team]):config.names[team];
   $('name'+id).textContent=name;
-  const icon=active&&isServing?'🎾':'';
+  const icon=active?(isServing?'🎾':config.mode==='double'?'🏸':''):'';
   const side=active?(isServing?serveSide():returnSide()):'';
   const position=side==='LINKS'?'left':side==='RECHTS'?'right':isServing?'right':'left';
   $('iconLeft'+id).textContent=icon&&position==='left'?icon:'';
