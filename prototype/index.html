@@ -1081,6 +1081,13 @@ const DEMO_TRANSLATIONS = [
  ['Der Verlauf liegt nur in diesem Browser. Dies ist noch keine Synchronisierung.','History is stored in this browser only. This is not synchronization yet.'],
  ['Die Match-Zählung erfolgt in der Watch-Vorschau links bzw. oben.','Count points in the Watch preview on the left or above.'],
  ['Einstellungen und Match-Verlauf ohne unnötige Menüs.','Settings and match history without unnecessary menus.'],
+ ['Die Punkte werden lokal auf diesem Gerät gespeichert. Noch keine Synchronisierung mit anderen Geräten.','Points are saved locally on this device. No cross-device synchronization yet.'],
+ ['Spieler oder Team suchen','Search players or teams'],
+ ['Alle Matches','All matches'],
+ ['Abgeschlossen','Finished'],
+ ['Fortsetzbar','Resumable'],
+ ['Lokale Matches werden geladen …','Loading local matches …'],
+ ['Lade Match-Archiv …','Loading match history …'],
  ['Tippe direkt auf die Seite des Spielers, der den Punkt gewinnt.','Tap the side of the player who wins the point.'],
  ['Simulation der Watch-Bedienung im Browser. Kein echtes WatchOS.','Watch simulation in your browser. Not actual watchOS.'],
  ['Zählen. Ohne nachzudenken.','Score. Without thinking.'],
@@ -1088,6 +1095,10 @@ const DEMO_TRANSLATIONS = [
  ['iPhone-Vorschau','iPhone preview'],
  ['Watch-Vorschau','Watch preview'],
  ['Einstellungen','Settings'],
+ ['Live-Verlauf · Punkt für Punkt','Live Log · Point by point'],
+ ['Live-Verlauf','Live Log'],
+ ['Match-Archiv','Match History'],
+ ['Archiv','History'],
  ['Verlauf','History'],
  ['Matchstand nach Sätzen','Match score by set'],
  ['MATCHSTAND','MATCH SCORE'],
@@ -1250,6 +1261,7 @@ function setDemoLanguage(next){
  if(typeof refreshPhoneMenu==='function'&&phoneMenuOpen)refreshPhoneMenu();
  if(typeof updatePhoneLiveLabels==='function')updatePhoneLiveLabels();
  if(typeof renderLandscapeScoreboard==='function')renderLandscapeScoreboard();
+ if(typeof renderArchiveList==='function'&&archiveReady)renderArchiveList();
 }
 function toggleDemoLanguage(){setDemoLanguage(demoLang==='de'?'en':'de')}
 
@@ -1602,9 +1614,10 @@ $('view-archive').addEventListener('click',async e=>{
  }catch(err){$('archiveStorageStatus').textContent=String(err.message||err)}
 });
 
-function fresh(){state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:0,awaitingServe:true,tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0],rest:null,setStartedAt:null,setDurations:[],matchEndedAt:null,finishDismissed:false,decisionBanner:null,finishReason:null,retiredBy:null};clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);undo=[];events=[];selectedHistorySet=null;started=Date.now();render()}
+function fresh(){currentMatchId=makeMatchId();currentMatchCreatedAt=Date.now();state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:0,awaitingServe:true,tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0],rest:null,setStartedAt:null,setDurations:[],matchEndedAt:null,finishDismissed:false,decisionBanner:null,finishReason:null,retiredBy:null};clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);undo=[];events=[];selectedHistorySet=null;started=Date.now();render()}
 function chooseFirstServe(team){
  if(!state||!state.awaitingServe)return;
+ if(!archiveReady)archiveEarlyScoring=true;
  state.server=team;state.awaitingServe=false;
  started=Date.now();state.setStartedAt=started;
  event(config.mode==='double'?'Match gestartet · Erstes Aufschlagteam: '+teamDisplayName(team):
@@ -1755,7 +1768,7 @@ function renderStats(){
 function renderHistory(){
  const entries=events.filter(e=>e.details&&Number.isInteger(e.details.setIndex)).reverse();
  const current=state.finished&&!retirementActive()?Math.max(0,state.completed.length-1):state.completed.length;
- const count=Math.max(current+1,...entries.map(e=>e.details.setIndex+1));
+ const count=entries.reduce((maximum,e)=>Math.max(maximum,e.details.setIndex+1),current+1);
  const active=selectedHistorySet===null?current:Math.min(selectedHistorySet,count-1);
  $('historySetTabs').innerHTML=Array.from({length:count},(_,i)=>
  '<button type="button" class="history-set-tab '+(active===i?'active':'')+'" data-history-set="'+i+'" aria-pressed="'+(active===i)+'">'+
@@ -2102,7 +2115,7 @@ function render(){if(!state)return;$('watchConfiguration').classList.toggle('hid
  phaseEl.textContent=phase;
  phaseEl.className=phase.startsWith('MATCHBALL')?'phase-alert phase-matchball':phase.startsWith('SATZBALL')?'phase-alert phase-setball':phase.startsWith('EINSTAND')?'phase-alert phase-deuce':phase.startsWith('NO-AD')?'phase-alert phase-noad':'phase-default';renderRest();$('setline').innerHTML=watchSetTable();$('clock').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable();
  updatePhoneLiveLabels();
- $('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();renderLandscapeScoreboard();renderStats();renderHistory()}
+ $('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();renderLandscapeScoreboard();renderStats();renderHistory();persistCurrentMatch()}
 $('historySetTabs').addEventListener('click',e=>{const b=e.target.closest('[data-history-set]');if(!b)return;selectedHistorySet=Number(b.dataset.historySet);renderHistory()});
 $('watchDecisionOverlay').addEventListener('click',e=>{
  e.stopPropagation();
@@ -2637,6 +2650,7 @@ function switchTab(t){
  document.querySelectorAll('.phone-device-tabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t));
  if(t==='match'&&!$('phoneHistoryPane').classList.contains('hidden'))scrollHistoryToCurrent();
+ if(t==='archive')refreshArchiveList();
 }
 function modeFields(){
  const doubles=$('mode').value!=='single',mixed=$('mode').value==='mixed';
@@ -2680,6 +2694,7 @@ $('mode').addEventListener('change',modeFields);
 $('sets').addEventListener('change',modeFields);
 modeFields();document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));$('pointA').addEventListener('click',()=>point(0));$('pointB').addEventListener('click',()=>point(1));$('undo').addEventListener('click',undoAction);$('watchUndo').addEventListener('click',undoAction);$('phoneUndo').addEventListener('click',undoAction);$('setupChoice0').addEventListener('click',()=>chooseSetup(0));$('setupChoice1').addEventListener('click',()=>chooseSetup(1));$('setupBack').addEventListener('click',()=>{setupStage='server';renderSetup()});
 $('apply').addEventListener('click',()=>{if(!validMixedPlayers())return;if(state.pointCount&&!confirm('Laufendes Match verwerfen?'))return;watchConfigOpen=false;initConfig();fresh();switchTab('match')});initConfig();fresh();syncPhoneToWatch();
+initializeOfflineArchive();
 renderWatchPlatform();
 const splashLogos=[...document.querySelectorAll('.splash-brand')];
 const splashSrc=document.querySelector('.score-brand-image').src;
