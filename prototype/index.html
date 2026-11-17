@@ -576,6 +576,15 @@
 .scoreboard-player{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:2px;padding:2px 2px 2px 6px;overflow:hidden}
 .scoreboard-player .scoreboard-player-name{display:block;white-space:normal;overflow-wrap:anywhere;font-size:clamp(10px,1.42vw,17px);line-height:1.08;font-weight:900}
 .scoreboard-player .scoreboard-player-name+.scoreboard-player-name{color:#cee0ec;font-weight:760}
+/* Aufschlagpunkt vor dem einzelnen Spielernamen – stabiler Platz für alle Namen. */
+.scoreboard-player .scoreboard-player-name{display:flex;align-items:center;gap:6px;min-width:0}
+.scoreboard-player .scoreboard-player-text{min-width:0;overflow-wrap:anywhere}
+.scoreboard-serve-dot{display:block;flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:transparent;border:1px solid transparent;opacity:0}
+.scoreboard-player .scoreboard-player-name.is-serving{color:#fff;font-weight:950}
+.scoreboard-player .scoreboard-player-name.is-serving .scoreboard-serve-dot{background:#f9e66c;border-color:#fff4a1;opacity:1;box-shadow:0 0 0 2px #f9e66c36,0 0 10px #f9e66c99}
+.scoreboard-bottom{justify-content:flex-end}
+@media(max-width:540px){.scoreboard-player .scoreboard-player-name{gap:3px}.scoreboard-serve-dot{width:6px;height:6px}}
+
 .scoreboard-row .scoreboard-set,.scoreboard-row .scoreboard-games,.scoreboard-row .scoreboard-points{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;border-left:1px solid #41607755;font-weight:950;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
 .scoreboard-set{font-size:clamp(15px,2.3vw,29px);white-space:nowrap;gap:0}
 .scoreboard-set sup{color:#7fd6f8;font-size:.43em;position:relative;top:-.5em;line-height:1}
@@ -813,7 +822,7 @@
  <div class="scoreboard-top-right"><span class="scoreboard-phase" id="sbPhase">SATZ 1 · SPIEL 1</span><span class="scoreboard-status" id="sbStatus">VORBEREITUNG</span><div class="scoreboard-controls">
  <button type="button" id="phoneScoreboardFullscreen" aria-label="Scoreboard als Vollbild anzeigen" title="Vollbild">⛶</button><button type="button" id="phoneScoreboardClose" aria-label="Scoreboard schließen" title="Zurück zur Handy-Ansicht">✕</button></div></div></div>
  <div class="scoreboard-main" id="sbGrid" aria-live="off"></div>
- <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbServeCaption">Aufschlag</small><strong class="scoreboard-serve" id="sbServe">–</strong></div><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
+ <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
 </div>
 <div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Scoreboard im Querformat öffnen" aria-label="Scoreboard im Querformat öffnen" aria-controls="phoneScoreboard" aria-expanded="false">⛶ Board</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
 <nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button></nav>
@@ -2144,10 +2153,14 @@ $('phoneMenu').addEventListener('keydown',event=>{
 
 /* Landscape scoreboard reads the same match state as Watch and phone score table. */
 function scoreboardServingPlayer(){
- if(!state||state.awaitingServe||state.finished||state.setupPending)return {team:-1,name:'–'};
- const team=servingTeam();
- const key=config.mode==='double'?currentServer():null;
- return {team,name:config.mode==='double'?(key?nameOf(key):'–'):config.names[team]};
+ if(!state||state.awaitingServe||state.finished||state.setupPending)return {team:-1,player:-1};
+ if(config.mode==='double'){
+  const key=currentServer();
+  if(!key)return {team:-1,player:-1};
+  const [team,player]=key.split(':').map(Number);
+  return {team,player};
+ }
+ return {team:servingTeam(),player:0};
 }
 function scoreboardMatchDuration(){
  return !state||state.awaitingServe?'00:00':formatDuration((state.matchEndedAt||Date.now())-started);
@@ -2165,9 +2178,11 @@ function renderLandscapeScoreboard(){
   .concat(['<span>'+(en?'POINTS':'PUNKTE')+'</span>']).join('');
  const header='<div class="scoreboard-grid scoreboard-grid-head" style="--sb-sets:'+cols+'">'+labels+'</div>';
  const rows=[0,1].map(team=>{
-  const names=config.mode==='double'
-    ?'<span class="scoreboard-player-name">'+esc(config.names[team])+'</span><span class="scoreboard-player-name">'+esc(config.partners[team])+'</span>'
-    :'<span class="scoreboard-player-name">'+esc(config.names[team])+'</span>';
+  const playerLabel=(index,name)=>{
+   const active=serving.team===team&&serving.player===index;
+   return '<span class="scoreboard-player-name'+(active?' is-serving':'')+'"'+(active?' aria-label="'+esc(name)+' · '+(en?'serving':'Aufschlag')+'"':'')+'><span class="scoreboard-serve-dot" aria-hidden="true"></span><span class="scoreboard-player-text">'+esc(name)+'</span></span>';
+  };
+  const names=playerLabel(0,config.names[team])+(config.mode==='double'?playerLabel(1,config.partners[team]):'');
   const setCells=Array.from({length:cols},(_,i)=>{
    const complete=state.completed[i],current=i===state.completed.length&&hasActiveSet();
    const value=complete?complete[team]:current?(state.mtb?state.points[team]:state.games[team]):'–';
@@ -2189,9 +2204,7 @@ function renderLandscapeScoreboard(){
  $('sbPhase').textContent=phase;
  $('sbStatus').textContent=state.finished?(en?'FINAL':'ENDE'):
   state.awaitingServe?(en?'SETUP':'VORBEREITUNG'):'● LIVE';
- $('sbServeCaption').textContent=en?'SERVING':'AUFSCHLAG';
  $('sbDurationCaption').textContent=en?'DURATION':'SPIELDAUER';
- $('sbServe').textContent=serving.team>=0?'🎾 '+serving.name:'–';
  updateScoreboardClock();
 }
 let scoreboardReturnTimer=null;
