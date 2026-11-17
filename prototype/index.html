@@ -434,6 +434,24 @@
 #watchHousing.is-wear-os .watch-menu-fields{gap:4px}
 #watchHousing.is-wear-os .watch-menu-fields input,#watchHousing.is-wear-os .watch-menu-fields select{min-height:30px;font-size:11px}
 
+
+/* Smartphone-Tabs gehoeren auf das Display, nicht oberhalb des Device-Mockups. */
+.phone .phone-device-tabs{
+ position:sticky;top:36px;z-index:17;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:4px;width:100%;min-width:0;margin:5px 0 8px;padding:4px;
+ background:#0a1b2b;border:1px solid #395670;border-radius:11px;
+ box-shadow:0 3px 10px #0005
+}
+.phone .phone-device-tabs .tab{
+ display:flex;align-items:center;justify-content:center;min-width:0;
+ padding:8px 3px;min-height:34px;font-size:11px;line-height:1.1;
+ white-space:nowrap;border-radius:8px;font-weight:850;
+}
+.phone .phone-device-tabs .tab.active{
+ color:#152319;background:#bcf75c;border-color:#bcf75c
+}
+@media(max-width:360px){.phone .phone-device-tabs{gap:2px;padding:3px}.phone .phone-device-tabs .tab{font-size:10px;padding:7px 1px}}
+
 /* Smartphone menu: same actions as Watch, own larger tap targets and display. */
 .phone-top{position:sticky;top:0;z-index:18;justify-content:space-between;gap:6px;min-height:34px;min-width:0;padding:4px 8px;background:#091a2a;border:1px solid #31485e;border-radius:0 0 13px 13px;margin-top:-10px;box-shadow:0 3px 10px #0004}
 .phone-top>span{font-size:10px;font-weight:900;white-space:nowrap;letter-spacing:.02em}
@@ -462,7 +480,7 @@
 
 /* The match score stays on top of the phone, in ALL tabs (settings/match/history).
    Percentage columns guarantee full 1/3/5-set visibility without horizontal scrolling. */
-.phone-live-score{position:sticky;top:38px;z-index:16;width:100%;min-width:0;margin:1px 0 12px;padding:7px 6px 8px;
+.phone-live-score{position:sticky;top:78px;z-index:16;width:100%;min-width:0;margin:1px 0 12px;padding:7px 6px 8px;
  background:#13263a;border:1px solid #47637c;border-radius:13px;box-shadow:0 5px 14px #050c17a8}
 .phone-live-heading{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:0 2px 6px}
 .phone-live-heading strong{font-size:10px;font-weight:950;letter-spacing:.045em;color:#e6f6ff}
@@ -735,7 +753,7 @@
     <button type="button" class="watch-menu-action wm-cancel" ><span class="wm-lang" data-de="Abbrechen" data-en="Cancel">Abbrechen</span><span aria-hidden="true">›</span></button>
   </div>
 </div><div class="watch-menu-toast" id="status" aria-live="polite"></div></div></div></section>
-<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="device-tabs"><button class="tab active" data-tab="settings">Einstellungen</button><button class="tab" data-tab="match">Match</button><button class="tab" data-tab="history">Verlauf</button><button class="tab scoreboard-tab" id="phoneScoreboardTab" type="button" aria-pressed="false">⛶ Scoreboard</button></div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-scoreboard-screen hidden" id="phoneScoreboard" aria-label="TENNILO Scoreboard im Querformat" role="region">
+<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-scoreboard-screen hidden" id="phoneScoreboard" aria-label="TENNILO Scoreboard im Querformat" role="region">
  <div class="scoreboard-top"><div class="scoreboard-brand"><span class="scoreboard-brand-mark" aria-hidden="true"></span><div><strong>TENNILO SCORE</strong><small>LIVE SCOREBOARD</small></div></div>
  <div class="scoreboard-top-right"><span class="scoreboard-phase" id="sbPhase">SATZ 1 · SPIEL 1</span><span class="scoreboard-status" id="sbStatus">VORBEREITUNG</span><div class="scoreboard-controls">
  <button type="button" id="phoneScoreboardFullscreen" aria-label="Scoreboard als Vollbild anzeigen" title="Vollbild">⛶</button><button type="button" id="phoneScoreboardClose" aria-label="Scoreboard schließen" title="Zurück zur Handy-Ansicht">✕</button></div></div></div>
@@ -743,6 +761,7 @@
  <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbServeCaption">Aufschlag</small><strong class="scoreboard-serve" id="sbServe">–</strong></div><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
 </div>
 <div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Querformat-Scoreboard öffnen" aria-label="Querformat-Scoreboard öffnen">⛶</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
+<nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button><button class="tab" type="button" data-tab="history">Verlauf</button></nav>
 <div class="phone-menu hidden" id="phoneMenu" role="dialog" aria-modal="true" aria-labelledby="phoneMenuTitle">
  <div class="phone-menu-head"><button type="button" id="phoneMenuBack" aria-label="Zurück">‹</button><strong id="phoneMenuTitle">Menü</strong><button type="button" id="phoneMenuClose" aria-label="Schließen">✕</button></div>
  <div class="phone-menu-content" id="phoneMenuContent"></div><p class="phone-menu-error hidden" id="phoneMenuError" role="alert"></p>
@@ -2107,11 +2126,9 @@ function renderLandscapeScoreboard(){
 function setPhoneScoreboard(open){
  const phone=$('phone');
  const screen=$('phoneScoreboard');
- const tab=$('phoneScoreboardTab');
  phone.classList.toggle('is-scoreboard',open);
  screen.classList.toggle('hidden',!open);
- tab.classList.toggle('active',open);
- tab.setAttribute('aria-pressed',String(open));
+ $('phoneScoreboardOpen').setAttribute('aria-expanded',String(open));
  if(open){
   if(!$('phoneMenu').classList.contains('hidden'))closePhoneMenu();
   phone.scrollTop=0;
@@ -2120,7 +2137,6 @@ function setPhoneScoreboard(open){
   document.exitFullscreen().catch(()=>{});
  }
 }
-$('phoneScoreboardTab').addEventListener('click',()=>setPhoneScoreboard(!$('phone').classList.contains('is-scoreboard')));
 $('phoneScoreboardOpen').addEventListener('click',()=>setPhoneScoreboard(true));
 $('phoneScoreboardClose').addEventListener('click',()=>setPhoneScoreboard(false));
 $('phoneScoreboardFullscreen').addEventListener('click',()=>{
