@@ -638,7 +638,7 @@
 
 
 /* Zwei Hauptbereiche, innerhalb von Match eine eigene Statistik/Verlauf-Karte. */
-.phone .phone-device-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.phone .phone-device-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
 .phone-insights-card{min-width:0;padding:10px;border:1px solid #3b5971;background:#101e30;border-radius:15px;margin:14px 0}
 .phone-insights-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;background:#0b1929;border:1px solid #35536b;border-radius:11px;margin-bottom:12px}
 .phone-insights-tabs button{min-height:37px;min-width:0;border:1px solid transparent;border-radius:8px;background:transparent;color:#b3cbda;font-size:12px;font-weight:900;cursor:pointer}
@@ -696,6 +696,36 @@
 @media(prefers-reduced-motion:reduce){
  .phone.is-scoreboard,.phone.scoreboard-returning{animation:none!important;transform:none!important}
 }
+
+/* Offline-Matcharchiv bleibt unterhalb der fixierten Live-Tabelle. */
+.archive-info{font-size:11px;color:#a5c1d5;margin:0 0 11px;line-height:1.4}
+.archive-controls{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin:10px 0}
+.archive-controls input,.archive-controls select{width:100%;min-width:0;min-height:38px;border:1px solid #415d73;background:#132a3c;color:#ebf7ff;border-radius:9px;padding:8px 10px;font-size:12px}
+.archive-list{display:flex;flex-direction:column;gap:9px;margin:12px 0}
+.archive-match{display:block;width:100%;padding:12px 10px;background:#122a3d;border:1px solid #466077;border-left:4px solid #8bcde4;color:#f1f9ff;border-radius:12px;text-align:left}
+.archive-match:focus-visible,.archive-action:focus-visible{outline:2px solid #bcf75c;outline-offset:2px}
+.archive-match.active-match{border-left-color:#bcf75c}
+.archive-head,.archive-team,.archive-foot{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.archive-head,.archive-foot{font-size:10px;color:#abc4d7}
+.archive-head{margin-bottom:7px}
+.archive-team{font-size:12px;line-height:1.25;font-weight:850;margin:4px 0;min-width:0}
+.archive-team span:first-child{min-width:0;overflow-wrap:anywhere}
+.archive-team strong{white-space:nowrap;font-size:11px;font-variant-numeric:tabular-nums}
+.archive-team.winner{color:#ceff97}
+.archive-foot{margin-top:10px;padding-top:7px;border-top:1px solid #37536b}
+.archive-tag{padding:3px 7px;border-radius:6px;background:#29445a;color:#d8ecfb;font-weight:850;white-space:nowrap}
+.archive-tag.finished{background:#264634;color:#c6ff99}
+.archive-detail{margin:12px 0;border:1px solid #49667a;border-radius:13px;background:#0e2030;padding:12px 10px;color:#e7f4fe;min-width:0}
+.archive-detail.hidden{display:none!important}
+.archive-detail h4{font-size:14px;margin:0 0 8px}
+.archive-detail h5{font-size:11px;letter-spacing:.05em;margin:13px 0 7px;color:#b5d3e6;text-transform:uppercase}
+.archive-detail .archive-detail-result{font-size:15px;line-height:1.35;font-weight:900;overflow-wrap:anywhere}
+.archive-detail .archive-statline,.archive-detail .archive-event{padding:6px 0;border-bottom:1px solid #345064;font-size:11px;line-height:1.45}
+.archive-detail .archive-event small{display:block;color:#9fbed4;font-size:10px}
+.archive-detail .archive-detail-actions{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.archive-action{min-height:34px;padding:7px 9px;font-size:11px;font-weight:850;border:1px solid #5d8397;border-radius:9px;background:#203c51;color:white}
+.archive-action.primary{background:#bcf75c;color:#0e2215;border-color:#bcf75c}
+
 </style></head><body>
 <!-- Transparenter Umriss des Original-Logos: nur Außenfläche entfernen, Originalgrafik unverändert lassen. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden">
@@ -830,7 +860,7 @@
  <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
 </div>
 <div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Scoreboard im Querformat öffnen" aria-label="Scoreboard im Querformat öffnen" aria-controls="phoneScoreboard" aria-expanded="false">⛶ Board</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
-<nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button></nav>
+<nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button><button class="tab" type="button" data-tab="archive">Archiv</button></nav>
 <div class="phone-menu hidden" id="phoneMenu" role="dialog" aria-modal="true" aria-labelledby="phoneMenuTitle">
  <div class="phone-menu-head"><button type="button" id="phoneMenuBack" aria-label="Zurück">‹</button><strong id="phoneMenuTitle">Menü</strong><button type="button" id="phoneMenuClose" aria-label="Schließen">✕</button></div>
  <div class="phone-menu-content" id="phoneMenuContent"></div><p class="phone-menu-error hidden" id="phoneMenuError" role="alert"></p>
@@ -905,12 +935,20 @@
 <section class="phone-insights-card" aria-label="Match-Statistik und Matchverlauf">
 <div class="phone-insights-tabs" role="tablist" aria-label="Match-Informationen">
 <button id="phoneInsightsStats" type="button" role="tab" aria-controls="phoneStatsPane" aria-selected="true" class="active" data-insight="stats">Statistik</button>
-<button id="phoneInsightsHistory" type="button" role="tab" aria-controls="phoneHistoryPane" aria-selected="false" data-insight="history">Verlauf</button>
+<button id="phoneInsightsHistory" type="button" role="tab" aria-controls="phoneHistoryPane" aria-selected="false" data-insight="history">Live-Verlauf</button>
 </div>
 <div id="phoneStatsPane" class="phone-insights-pane" role="tabpanel" aria-labelledby="phoneInsightsStats"><section class="match-stats"><h4>Match-Statistiken <span class="stats-live">LIVE</span></h4><div class="match-stats-content" id="matchStats" aria-live="polite"></div><p class="note">Aus den gezählten Punkten berechnet. Aufschlagquote, Asse und Fehler benötigen später eine separate Erfassung.</p></section></div>
-<div id="phoneHistoryPane" class="phone-insights-pane hidden" role="tabpanel" aria-labelledby="phoneInsightsHistory"><h4>Punkt für Punkt</h4><div id="historySetTabs" class="history-set-tabs" aria-label="Satz auswählen"></div><div class="history" id="historyList"><p>Noch keine Punkte eingetragen.</p></div><p class="note" style="margin-top:12px">Der Verlauf liegt nur in diesem Browser. Dies ist noch keine Synchronisierung.</p></div>
+<div id="phoneHistoryPane" class="phone-insights-pane hidden" role="tabpanel" aria-labelledby="phoneInsightsHistory"><h4>Live-Verlauf · Punkt für Punkt</h4><div id="historySetTabs" class="history-set-tabs" aria-label="Satz auswählen"></div><div class="history" id="historyList"><p>Noch keine Punkte eingetragen.</p></div><p class="note" style="margin-top:12px">Die Punkte werden lokal auf diesem Gerät gespeichert. Noch keine Synchronisierung mit anderen Geräten.</p></div>
 </section>
 <button class="btn" id="phoneUndo">Letzten Punkt rückgängig</button><p class="note" style="margin-top:13px">Die Match-Zählung erfolgt in der Watch-Vorschau links bzw. oben.</p></div>
+<div class="view hidden" id="view-archive">
+ <h3>Match-Archiv</h3>
+ <p class="archive-info" id="archiveStorageStatus" role="status">Lokale Matches werden geladen …</p>
+ <div class="archive-controls"><input id="archiveSearch" type="search" placeholder="Spieler oder Team suchen" aria-label="Match-Archiv durchsuchen">
+ <select id="archiveFilter" aria-label="Matches filtern"><option value="all">Alle Matches</option><option value="finished">Abgeschlossen</option><option value="ongoing">Fortsetzbar</option></select></div>
+ <div id="archiveList" class="archive-list" aria-live="polite"><p class="note">Lade Match-Archiv …</p></div>
+ <div id="archiveDetail" class="archive-detail hidden" aria-live="polite"></div>
+</div>
 </div></section></main>
 <div class="instruction"><b>Was dieser Prototyp schon kann:</b> reguläre Tenniszählung inklusive Vorteil/No-Ad, Watch-interne Doppel-Aufstellung und Mixed-Entscheidungspunkt, farbige Satzstände, Tiebreak-Anzeige, Seitenwechsel-Hinweise und Watch-Rückgängig, Spiel- und Satzwechsel, Tiebreak (bei 6:6 bzw. 4:4), Match-Tiebreak im Entscheidungssatz, Aufschlagwechsel, Rückgängig, korrigierbaren aktuellen Spielstand und Matchverlauf. <b>Noch nicht umgesetzt:</b> native Watch-App, echtes Offline-Speichern, Hardware-Tasten, Haptik und Watch/Handy-Synchronisierung.</div><div class="footer">TENNILO Score · Produkt- und Bedienkonzept, kein veröffentlichter App-Build</div></div>
 <div class="modal-bg hidden" id="modal"><div class="modal" role="dialog" aria-modal="true"><h3>Spielstand korrigieren</h3><p style="margin-bottom:16px">Aktuelles Spiel und Aufschlag direkt einstellen. Die vorherige Historie bleibt als Prototyp bestehen.</p><div class="two"><div class="field"><label>Spiele A</label><input id="fixGamesA" type="number" min="0" max="20"></div><div class="field"><label>Spiele B</label><input id="fixGamesB" type="number" min="0" max="20"></div></div><div class="two"><div class="field"><label>Punkte A</label><select id="fixPointsA"><option value="0">0</option><option value="1">15</option><option value="2">30</option><option value="3">40</option><option value="4">Vorteil</option></select></div><div class="field"><label>Punkte B</label><select id="fixPointsB"><option value="0">0</option><option value="1">15</option><option value="2">30</option><option value="3">40</option><option value="4">Vorteil</option></select></div></div><div class="field"><label>Aufschlag</label><select id="fixServe"><option value="0">Spieler A</option><option value="1">Spieler B</option></select></div><p class="note">Für fortgeschrittene Korrekturen (Sätze/Tiebreak) folgt eine eigene Ansicht.</p><div class="actions"><button class="btn" id="cancelFix">Abbrechen</button><button class="btn primary" id="saveFix">Übernehmen</button></div></div></div>
@@ -1272,7 +1310,7 @@ function chooseFirstServe(team){
  render();
 }
 function note(msg){$('status').textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('status').textContent='',2600)}
-function snapshot(){undo.push({state:clone(state),events:clone(events)});if(undo.length>500)undo.shift()}
+function snapshot(){undo.push({state:clone(state),eventCount:events.length});if(undo.length>80)undo.shift()}
 
 function teamDisplayName(team){
  return config.mode==='double'?config.names[team]+' / '+config.partners[team]:config.names[team];
@@ -1332,7 +1370,7 @@ function renderRest(){
  phase.className='phase-alert phase-rest';
 }
 
-function event(msg,details=null){events.unshift({msg,time:elapsed(),details});events=events.slice(0,500)}
+function event(msg,details=null){events.unshift({msg,time:elapsed(),at:Date.now(),details})}
 function historyScore(){
  const points=state.tb?state.points.map(String):displayPoints();
  return 'Satz '+(state.completed.length+1)+' · '+state.games.join(':')+' Spiele · '+points.join(':')+' Punkte';
@@ -1793,7 +1831,7 @@ $('watchRestOverlay').addEventListener('click',e=>{
  renderRest();
 });
 $('firstServeA').addEventListener('click',()=>chooseFirstServe(0));$('firstServeB').addEventListener('click',()=>chooseFirstServe(1));
-function undoAction(){if(!undo.length){note('Nichts zum Rückgängigmachen');return}let x=undo.pop();state=x.state;events=x.events;clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);if(state.decisionBanner&&Date.now()<state.decisionBanner.largeUntil)decisionBannerTimer=setTimeout(renderDecisionBanner,state.decisionBanner.largeUntil-Date.now()+100);if(state.rest&&Date.now()<state.rest.largeUntil)restBannerTimer=setTimeout(renderRest,state.rest.largeUntil-Date.now()+100);if(state.setupPending){state.setupPending=false;requestSetup()}render();note('Letzter Punkt rückgängig')}
+function undoAction(){if(!undo.length){note('Nichts zum Rückgängigmachen');return}let x=undo.pop();state=x.state;events=x.events||events.slice(Math.max(0,events.length-x.eventCount));clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);if(state.decisionBanner&&Date.now()<state.decisionBanner.largeUntil)decisionBannerTimer=setTimeout(renderDecisionBanner,state.decisionBanner.largeUntil-Date.now()+100);if(state.rest&&Date.now()<state.rest.largeUntil)restBannerTimer=setTimeout(renderRest,state.rest.largeUntil-Date.now()+100);if(state.setupPending){state.setupPending=false;requestSetup()}render();note('Letzter Punkt rückgängig')}
 function watchModeFields(){
  const d=$('watchMode').value!=='single',m=$('watchMode').value==='mixed';
  $('watchDoubles').classList.toggle('hidden',!d);
