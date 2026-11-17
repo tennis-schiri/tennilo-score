@@ -650,10 +650,15 @@
 .phone-insights-card .match-stats h4{margin-bottom:11px}
 .phone-insights-card .history{max-height:305px;overflow-y:auto;overscroll-behavior:contain}
 
-/* Korrigierte geräteweite Querformat-Vorschau: der komplette Handy-Rahmen dreht. */
+/* Die Querformat-Demo tauscht reale Geraetemasse: 330 x 680 wird 680 x 330.
+   Die rechte Spalte darf das gedrehte Modell nicht mehr zusammenschieben. */
+.layout.scoreboard-preview-active{grid-template-columns:minmax(0,1fr)}
+.layout.scoreboard-preview-active>.panel:first-child{display:none}
+.layout.scoreboard-preview-active>.panel:last-child{min-width:0}
 .phone .phone-scoreboard-open{width:auto;min-width:64px;padding:0 6px;white-space:nowrap;font-size:10px;letter-spacing:.015em}
 .phone.is-scoreboard{
- width:100%;max-width:100%;aspect-ratio:16/9;height:auto;min-height:0;
+ width:min(var(--scoreboard-landscape-width,680px),100%);
+ max-width:none;aspect-ratio:var(--scoreboard-landscape-ratio,2.06);height:auto;min-height:0;
  padding:0!important;border:6px solid #48546a;border-radius:27px;
  background:#071321;overflow:hidden;
  transform-origin:50% 50%;animation:phone-turn-landscape .65s cubic-bezier(.2,.8,.22,1) both;
@@ -2210,11 +2215,17 @@ function renderLandscapeScoreboard(){
 let scoreboardReturnTimer=null;
 function setPhoneScoreboard(open){
  const phone=$('phone'),screen=$('phoneScoreboard'),trigger=$('phoneScoreboardOpen');
+ const layout=phone.closest('.layout');
  clearTimeout(scoreboardReturnTimer);
  if(open){
   if(!$('phoneMenu').classList.contains('hidden'))closePhoneMenu();
-  phone.classList.remove('scoreboard-returning');
-  phone.classList.remove('scoreboard-immersive');
+  phone.classList.remove('scoreboard-returning','scoreboard-immersive');
+  // Hochformat vor dem Wechsel messen: Breite und Hoehe werden 1:1 getauscht.
+  const portraitWidth=phone.offsetWidth||330;
+  const portraitHeight=phone.offsetHeight||680;
+  phone.style.setProperty('--scoreboard-landscape-width',portraitHeight+'px');
+  phone.style.setProperty('--scoreboard-landscape-ratio',String(portraitHeight/portraitWidth));
+  if(layout)layout.classList.add('scoreboard-preview-active');
   phone.scrollTop=0;
   screen.classList.remove('hidden');
   screen.setAttribute('aria-hidden','false');
@@ -2229,7 +2240,10 @@ function setPhoneScoreboard(open){
   phone.classList.remove('scoreboard-returning');
   void phone.offsetWidth;
   phone.classList.add('scoreboard-returning');
-  scoreboardReturnTimer=setTimeout(()=>phone.classList.remove('scoreboard-returning'),650);
+  scoreboardReturnTimer=setTimeout(()=>{
+   phone.classList.remove('scoreboard-returning');
+   if(layout)layout.classList.remove('scoreboard-preview-active');
+  },650);
   if(document.fullscreenElement===phone&&document.exitFullscreen){
    document.exitFullscreen().catch(()=>{});
   }
