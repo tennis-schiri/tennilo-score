@@ -1321,7 +1321,7 @@ let archiveSaveQueue=Promise.resolve(),archiveEarlyScoring=false;
 function makeMatchId(){
  return 'score-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,11);
 }
-let currentMatchId=makeMatchId(),currentMatchCreatedAt=Date.now();
+let currentMatchId=makeMatchId(),currentMatchCreatedAt=Date.now(),firstServeAt=null;
 function openArchiveDatabase(){
  return new Promise((resolve,reject)=>{
   if(!('indexedDB' in window)){reject(new Error('IndexedDB nicht verfügbar'));return}
@@ -1363,7 +1363,7 @@ function archiveStatusOf(match){
 }
 function archiveSnapshot(){
  return {
-  id:currentMatchId,schemaVersion:1,createdAt:currentMatchCreatedAt,
+  id:currentMatchId,schemaVersion:1,createdAt:currentMatchCreatedAt,matchDateAt:firstServeAt||started,
   startedAt:started,updatedAt:Date.now(),
   endedAt:state.matchEndedAt||null,status:archiveStatusOf({state}),
   config:clone(config),state:clone(state),events:clone(events),undo:clone(undo.slice(-80))
@@ -1401,6 +1401,7 @@ function restoreArchiveRecord(record){
  if(!record||!record.config||!record.state)return;
  currentMatchId=record.id;
  currentMatchCreatedAt=record.createdAt||record.startedAt||Date.now();
+ firstServeAt=record.matchDateAt||record.startedAt||record.createdAt||Date.now();
  config=clone(record.config);
  state=clone(record.state);
  events=clone(record.events||[]);
@@ -1489,7 +1490,7 @@ function renderArchiveList(){
     current?(demoLang==='en'?'Current':'Aktuell'):(demoLang==='en'?'Resume':'Fortsetzbar');
    const score=archiveScoreRows(rec);
    const wins=rec.state.winner;
-   const start=rec.startedAt||rec.createdAt;
+   const start=rec.matchDateAt||rec.startedAt||rec.createdAt;
    return '<button type="button" class="archive-match'+(current?' active-match':'')+'" data-archive-open="'+esc(rec.id)+'">'+
     '<span class="archive-head"><span>'+archiveDate(start)+' · '+(rec.config.mixed?'Mixed':rec.config.mode==='double'?'Doppel':'Einzel')+'</span>'+
     '<span class="archive-tag'+(rec.status!=='ongoing'?' finished':'')+'">'+status+'</span></span>'+
@@ -1538,7 +1539,7 @@ function renderArchiveDetail(rec){
  if(archiveDetailView==='overview'){
   content='<h5>'+(en?'Result':'Ergebnis')+'</h5>'+
    [0,1].map(team=>'<p class="archive-detail-result">'+esc(archiveTeamName(rec.config,team))+' · '+esc(score[team])+'</p>').join('')+
-   '<div class="archive-statline">'+(en?'Started':'Beginn')+': '+archiveDate(rec.startedAt||rec.createdAt)+'</div>'+
+   '<div class="archive-statline">'+(en?'Started':'Beginn')+': '+archiveDate(rec.matchDateAt||rec.startedAt||rec.createdAt)+'</div>'+
    '<div class="archive-statline">'+(en?'Match time (until last save)':'Spieldauer (bis zur letzten Speicherung)')+': '+duration+'</div>'+
    '<div class="archive-statline">'+(en?'Status':'Status')+': '+(isOngoing?(en?'Ongoing / resumable':'Fortsetzbar'):rec.status==='retired'?(en?'Retirement':'Aufgabe'):(en?'Finished':'Abgeschlossen'))+'</div>';
  }else if(archiveDetailView==='stats'){
@@ -1614,13 +1615,13 @@ $('view-archive').addEventListener('click',async e=>{
  }catch(err){$('archiveStorageStatus').textContent=String(err.message||err)}
 });
 
-function fresh(){currentMatchId=makeMatchId();currentMatchCreatedAt=Date.now();state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:0,awaitingServe:true,tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0],rest:null,setStartedAt:null,setDurations:[],matchEndedAt:null,finishDismissed:false,decisionBanner:null,finishReason:null,retiredBy:null};clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);undo=[];events=[];selectedHistorySet=null;started=Date.now();render()}
+function fresh(){currentMatchId=makeMatchId();currentMatchCreatedAt=Date.now();firstServeAt=null;state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:0,awaitingServe:true,tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0],rest:null,setStartedAt:null,setDurations:[],matchEndedAt:null,finishDismissed:false,decisionBanner:null,finishReason:null,retiredBy:null};clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);undo=[];events=[];selectedHistorySet=null;started=Date.now();render()}
 function chooseFirstServe(team){
  if(!state||!state.awaitingServe)return;
  if(!archiveReady)archiveEarlyScoring=true;
  state.server=team;state.awaitingServe=false;
- started=Date.now();state.setStartedAt=started;
- event(config.mode==='double'?'Match gestartet · Erstes Aufschlagteam: '+teamDisplayName(team):
+ started=Date.now();firstServeAt=started;state.setStartedAt=started;
+ event(config.mode='double'?'Match gestartet · Erstes Aufschlagteam: '+teamDisplayName(team):
   'Match gestartet · Erster Aufschlag: '+config.names[team]);
  if(config.mode==='double')requestSetup();
  render();
