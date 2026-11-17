@@ -528,6 +528,75 @@
   );
   filter:drop-shadow(0 6px 10px rgba(0,190,220,.12));
 }
+
+/* Eigenstaendiges TENNILO Scoreboard im echten Querformat – reine Live-Anzeige. */
+.device-tabs .scoreboard-tab{border-color:#6b9b5d;color:#d5ffa0}
+.device-tabs .scoreboard-tab.active{background:#bcf75c;color:#102118}
+.phone-scoreboard-open{display:grid;place-items:center;width:29px;height:30px;min-width:29px;background:#203d50;color:#e0f7ff;border:1px solid #608499;border-radius:9px;font-size:16px;font-weight:900}
+.phone.is-scoreboard{width:100%;max-width:100%;aspect-ratio:16 / 9;height:auto;min-height:0;max-height:none;overflow:hidden;padding:0!important;background:#071321;border:1px solid #54768c;border-radius:17px;box-shadow:0 18px 38px #0008}
+.phone.is-scoreboard:fullscreen{width:100%;height:100%;max-width:none;aspect-ratio:auto;border:0;border-radius:0;display:grid;place-items:stretch}
+.phone-scoreboard-screen{position:absolute;inset:0;z-index:36;display:flex;flex-direction:column;overflow:hidden;color:#f2f7ff;background:radial-gradient(ellipse at 6% 3%,#1a384a 0%,#071321 54%,#050c15 100%)}
+.phone-scoreboard-screen.hidden{display:none!important}
+.scoreboard-top{display:flex;justify-content:space-between;align-items:center;gap:7px;flex:0 0 auto;padding:8px 10px 4px}
+.scoreboard-brand{display:flex;align-items:center;gap:6px;min-width:0}
+.scoreboard-brand-mark{width:7px;height:23px;border-radius:7px;background:#bcf75c;box-shadow:0 0 12px #bcf75c66}
+.scoreboard-brand strong{display:block;color:white;font-size:clamp(10px,1.6vw,17px);letter-spacing:.06em;font-weight:950;line-height:1}
+.scoreboard-brand small{display:block;color:#98d0e7;font-size:8px;font-weight:850;letter-spacing:.17em;margin-top:2px}
+.scoreboard-top-right{display:flex;gap:6px;align-items:center;min-width:0}
+.scoreboard-phase{font-size:clamp(9px,1vw,13px);font-weight:900;white-space:nowrap;color:#e2edfa;letter-spacing:.035em}
+.scoreboard-status{font-size:9px;color:#bdf67b;font-weight:950;letter-spacing:.07em;white-space:nowrap}
+.scoreboard-controls{display:flex;gap:4px}
+.scoreboard-controls button{display:grid;place-items:center;min-width:28px;height:26px;border-radius:7px;border:1px solid #527185;background:#183044;color:#eef8ff;font-size:15px;line-height:1;cursor:pointer}
+.scoreboard-controls button:focus-visible{outline:2px solid #bcf75c;outline-offset:2px}
+.scoreboard-main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:3px;padding:1px 9px 4px}
+.scoreboard-grid{display:grid;grid-template-columns:minmax(0,2.15fr) repeat(var(--sb-sets),minmax(0,.8fr)) minmax(0,.8fr) minmax(0,1.17fr);gap:3px;align-items:stretch;width:100%;min-width:0}
+.scoreboard-grid-head{flex:0 0 auto;min-height:17px;align-items:center;color:#8faec1;text-transform:uppercase;font-size:clamp(7px,.85vw,10px);letter-spacing:.03em;font-weight:900;text-align:center}
+.scoreboard-grid-head span:first-child{text-align:left;padding-left:8px}
+.scoreboard-row{flex:1 1 0;min-height:0;border:1px solid #3a556b;border-left:4px solid var(--sb-team-color);border-radius:8px;background:#12263a;align-items:stretch}
+.scoreboard-row.team-a{--sb-team-color:#bcf75c}
+.scoreboard-row.team-b{--sb-team-color:#7fd6f8;background:#11283c}
+.scoreboard-player{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:2px;padding:2px 2px 2px 6px;overflow:hidden}
+.scoreboard-player .scoreboard-player-name{display:block;white-space:normal;overflow-wrap:anywhere;font-size:clamp(10px,1.42vw,17px);line-height:1.08;font-weight:900}
+.scoreboard-player .scoreboard-player-name+.scoreboard-player-name{color:#cee0ec;font-weight:760}
+.scoreboard-row .scoreboard-set,.scoreboard-row .scoreboard-games,.scoreboard-row .scoreboard-points{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;border-left:1px solid #41607755;font-weight:950;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.scoreboard-set{font-size:clamp(15px,2.3vw,29px);white-space:nowrap;gap:0}
+.scoreboard-set sup{color:#7fd6f8;font-size:.43em;position:relative;top:-.5em;line-height:1}
+.scoreboard-set.won{color:#d0f78f}
+.scoreboard-set.lost{color:#b9cedb}
+.scoreboard-games{font-size:clamp(19px,2.8vw,37px);color:#dbeaf6}
+.scoreboard-points{font-size:clamp(25px,4.4vw,56px);color:#f6fcff;background:#233e50;border-radius:0 6px 6px 0}
+.scoreboard-row.team-a .scoreboard-points{color:#d2ff9e}
+.scoreboard-row.team-b .scoreboard-points{color:#abe5ff}
+.scoreboard-row.is-winner{box-shadow:inset 0 0 0 1px var(--sb-team-color)}
+.scoreboard-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;min-height:31px;padding:6px 13px 8px;background:#081624;border-top:1px solid #2d4a5e}
+.scoreboard-foot-item{display:flex;align-items:baseline;gap:5px;min-width:0;line-height:1.1}
+.scoreboard-foot-item small{font-size:clamp(8px,.85vw,11px);color:#93afc1;text-transform:uppercase;letter-spacing:.05em;font-weight:900;white-space:nowrap}
+.scoreboard-foot-item strong{font-size:clamp(10px,1.3vw,16px);color:#eef9ff;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scoreboard-foot-item .scoreboard-serve{color:#d5ffa1}
+.scoreboard-foot-item .scoreboard-duration{font-variant-numeric:tabular-nums}
+@media(max-width:540px){
+ .scoreboard-top{padding:5px 7px 3px}
+ .scoreboard-brand strong{font-size:10px}
+ .scoreboard-brand small{font-size:7px}
+ .scoreboard-brand-mark{height:17px;width:5px}
+ .scoreboard-phase{font-size:9px}
+ .scoreboard-status{font-size:8px}
+ .scoreboard-controls button{min-width:25px;height:23px}
+ .scoreboard-main{gap:2px;padding:0 5px 3px}
+ .scoreboard-grid{gap:2px}
+ .scoreboard-grid-head{font-size:7px;min-height:14px}
+ .scoreboard-row{border-left-width:3px;border-radius:6px}
+ .scoreboard-player{padding:2px 1px 2px 3px;gap:1px}
+ .scoreboard-player .scoreboard-player-name{font-size:10px}
+ .scoreboard-set{font-size:15px}
+ .scoreboard-games{font-size:17px}
+ .scoreboard-points{font-size:26px}
+ .scoreboard-bottom{min-height:26px;padding:4px 6px}
+ .scoreboard-foot-item{gap:3px}
+ .scoreboard-foot-item small{font-size:7px}
+ .scoreboard-foot-item strong{font-size:10px}
+}
+@media(max-width:400px){.scoreboard-phase{font-size:8px}.scoreboard-player .scoreboard-player-name{font-size:9px}.scoreboard-bottom{gap:4px}.scoreboard-foot-item strong{font-size:9px}}
 </style></head><body>
 <!-- Transparenter Umriss des Original-Logos: nur Außenfläche entfernen, Originalgrafik unverändert lassen. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden">
@@ -654,7 +723,14 @@
     <button type="button" class="watch-menu-action wm-cancel" ><span class="wm-lang" data-de="Abbrechen" data-en="Cancel">Abbrechen</span><span aria-hidden="true">›</span></button>
   </div>
 </div><div class="watch-menu-toast" id="status" aria-live="polite"></div></div></div></section>
-<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="device-tabs"><button class="tab active" data-tab="settings">Einstellungen</button><button class="tab" data-tab="match">Match</button><button class="tab" data-tab="history">Verlauf</button></div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
+<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="device-tabs"><button class="tab active" data-tab="settings">Einstellungen</button><button class="tab" data-tab="match">Match</button><button class="tab" data-tab="history">Verlauf</button><button class="tab scoreboard-tab" id="phoneScoreboardTab" type="button" aria-pressed="false">⛶ Scoreboard</button></div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-scoreboard-screen hidden" id="phoneScoreboard" aria-label="TENNILO Scoreboard im Querformat" role="region">
+ <div class="scoreboard-top"><div class="scoreboard-brand"><span class="scoreboard-brand-mark" aria-hidden="true"></span><div><strong>TENNILO SCORE</strong><small>LIVE SCOREBOARD</small></div></div>
+ <div class="scoreboard-top-right"><span class="scoreboard-phase" id="sbPhase">SATZ 1 · SPIEL 1</span><span class="scoreboard-status" id="sbStatus">VORBEREITUNG</span><div class="scoreboard-controls">
+ <button type="button" id="phoneScoreboardFullscreen" aria-label="Scoreboard als Vollbild anzeigen" title="Vollbild">⛶</button><button type="button" id="phoneScoreboardClose" aria-label="Scoreboard schließen" title="Zurück zur Handy-Ansicht">✕</button></div></div></div>
+ <div class="scoreboard-main" id="sbGrid" aria-live="off"></div>
+ <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbServeCaption">Aufschlag</small><strong class="scoreboard-serve" id="sbServe">–</strong></div><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
+</div>
+<div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Querformat-Scoreboard öffnen" aria-label="Querformat-Scoreboard öffnen">⛶</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
 <div class="phone-menu hidden" id="phoneMenu" role="dialog" aria-modal="true" aria-labelledby="phoneMenuTitle">
  <div class="phone-menu-head"><button type="button" id="phoneMenuBack" aria-label="Zurück">‹</button><strong id="phoneMenuTitle">Menü</strong><button type="button" id="phoneMenuClose" aria-label="Schließen">✕</button></div>
  <div class="phone-menu-content" id="phoneMenuContent"></div><p class="phone-menu-error hidden" id="phoneMenuError" role="alert"></p>
@@ -1567,7 +1643,7 @@ function render(){if(!state)return;$('watchConfiguration').classList.toggle('hid
  phaseEl.textContent=phase;
  phaseEl.className=phase.startsWith('MATCHBALL')?'phase-alert phase-matchball':phase.startsWith('SATZBALL')?'phase-alert phase-setball':phase.startsWith('EINSTAND')?'phase-alert phase-deuce':phase.startsWith('NO-AD')?'phase-alert phase-noad':'phase-default';renderRest();$('setline').innerHTML=watchSetTable();$('clock').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable();
  updatePhoneLiveLabels();
- $('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();renderStats();renderHistory()}
+ $('phonePoints').textContent=p.join(' : ');$('phoneServe').textContent=state.finished?'Match beendet':config.mode==='double'?nameOf(serv):config.names[server];$('phoneReturn').textContent=state.finished?'–':config.mode==='double'?nameOf(returner()):'–';$('phoneTime').textContent=elapsed();renderLandscapeScoreboard();renderStats();renderHistory()}
 $('historySetTabs').addEventListener('click',e=>{const b=e.target.closest('[data-history-set]');if(!b)return;selectedHistorySet=Number(b.dataset.historySet);renderHistory()});
 $('watchDecisionOverlay').addEventListener('click',e=>{
  e.stopPropagation();
@@ -1961,7 +2037,89 @@ $('phoneMenu').addEventListener('keydown',event=>{
  if(event.key==='Escape'){event.preventDefault();closePhoneMenu()}
 });
 
+
+/* Landscape scoreboard reads the same match state as Watch and phone score table. */
+function scoreboardServingPlayer(){
+ if(!state||state.awaitingServe||state.finished||state.setupPending)return {team:-1,name:'–'};
+ const team=servingTeam();
+ const key=config.mode==='double'?currentServer():null;
+ return {team,name:config.mode==='double'?(key?nameOf(key):'–'):config.names[team]};
+}
+function scoreboardMatchDuration(){
+ return !state||state.awaitingServe?'00:00':formatDuration((state.matchEndedAt||Date.now())-started);
+}
+function updateScoreboardClock(){
+ if($('sbDuration'))$('sbDuration').textContent=scoreboardMatchDuration();
+}
+function renderLandscapeScoreboard(){
+ if(!state)return;
+ const en=demoLang==='en';
+ const cols=Math.max(1,config.sets,state.completed.length+(hasActiveSet()?1:0));
+ const serving=scoreboardServingPlayer();
+ const labels=['<span>'+(en?'PLAYER / TEAM':'SPIELER / TEAM')+'</span>']
+  .concat(Array.from({length:cols},(_,i)=>'<span>'+(en?'SET ':'SATZ ')+(i+1)+'</span>'))
+  .concat(['<span>'+(en?'GAMES':'SPIELE')+'</span>','<span>'+(en?'POINTS':'PUNKTE')+'</span>']).join('');
+ const header='<div class="scoreboard-grid scoreboard-grid-head" style="--sb-sets:'+cols+'">'+labels+'</div>';
+ const rows=[0,1].map(team=>{
+  const names=config.mode==='double'
+    ?'<span class="scoreboard-player-name">'+esc(config.names[team])+'</span><span class="scoreboard-player-name">'+esc(config.partners[team])+'</span>'
+    :'<span class="scoreboard-player-name">'+esc(config.names[team])+'</span>';
+  const setCells=Array.from({length:cols},(_,i)=>{
+   const complete=state.completed[i],current=i===state.completed.length&&hasActiveSet();
+   const value=complete?complete[team]:current?(state.mtb?state.points[team]:state.games[team]):'–';
+   const tb=tbPointsForSet(i,team);
+   const cls=complete?(complete[team]>complete[1-team]?' won':' lost'):'';
+   return '<span class="scoreboard-set'+cls+'">'+esc(value)+(tb===null?'':'<sup>'+esc(tb)+'</sup>')+'</span>';
+  }).join('');
+  const games=state.awaitingServe||state.finished?'–':state.games[team];
+  const points=state.awaitingServe||state.finished?'–':displayPoints()[team];
+  const winner=state.finished&&state.winner===team?' is-winner':'';
+  return '<div class="scoreboard-grid scoreboard-row team-'+(team===0?'a':'b')+winner+'" style="--sb-sets:'+cols+'" role="row">'
+   +'<div class="scoreboard-player" role="rowheader">'+names+'</div>'+setCells
+   +'<span class="scoreboard-games">'+esc(games)+'</span><span class="scoreboard-points">'+esc(points)+'</span></div>';
+ }).join('');
+ $('sbGrid').innerHTML=header+rows;
+ const phase=state.finished?(en?'MATCH FINISHED':'MATCH BEENDET'):
+  state.awaitingServe?(en?'READY':'STARTBEREIT'):
+  state.mtb?'MATCH-TIEBREAK':state.tb?'TIEBREAK':
+  (en?'SET ':'SATZ ')+(state.completed.length+1)+(en?' · GAME ':' · SPIEL ')+(currentGame()+1);
+ $('sbPhase').textContent=phase;
+ $('sbStatus').textContent=state.finished?(en?'FINAL':'ENDE'):
+  state.awaitingServe?(en?'SETUP':'VORBEREITUNG'):'● LIVE';
+ $('sbServeCaption').textContent=en?'SERVING':'AUFSCHLAG';
+ $('sbDurationCaption').textContent=en?'DURATION':'SPIELDAUER';
+ $('sbServe').textContent=serving.team>=0?'🎾 '+serving.name:'–';
+ updateScoreboardClock();
+}
+function setPhoneScoreboard(open){
+ const phone=$('phone');
+ const screen=$('phoneScoreboard');
+ const tab=$('phoneScoreboardTab');
+ phone.classList.toggle('is-scoreboard',open);
+ screen.classList.toggle('hidden',!open);
+ tab.classList.toggle('active',open);
+ tab.setAttribute('aria-pressed',String(open));
+ if(open){
+  if(!$('phoneMenu').classList.contains('hidden'))closePhoneMenu();
+  phone.scrollTop=0;
+  renderLandscapeScoreboard();
+ }else if(document.fullscreenElement===phone&&document.exitFullscreen){
+  document.exitFullscreen().catch(()=>{});
+ }
+}
+$('phoneScoreboardTab').addEventListener('click',()=>setPhoneScoreboard(!$('phone').classList.contains('is-scoreboard')));
+$('phoneScoreboardOpen').addEventListener('click',()=>setPhoneScoreboard(true));
+$('phoneScoreboardClose').addEventListener('click',()=>setPhoneScoreboard(false));
+$('phoneScoreboardFullscreen').addEventListener('click',()=>{
+ const phone=$('phone');
+ if(document.fullscreenElement){
+  if(document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+ }else if(phone.requestFullscreen)phone.requestFullscreen().catch(()=>{});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false)});
+
 function switchTab(t){
+ if($('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false);
  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t));
  if(t==='history'){
@@ -2033,6 +2191,6 @@ function startSplashAnimation(){
 Promise.all(splashLogos.map(img=>typeof img.decode==='function'?img.decode().catch(()=>{}):Promise.resolve())).then(startSplashAnimation);
 setTimeout(startSplashAnimation,2500);
 document.querySelectorAll('.demo-splash').forEach(el=>el.addEventListener('click',()=>el.classList.add('hidden')));
-setInterval(()=>{if(state&&!state.finished&&!state.awaitingServe){$('clock').textContent=elapsed();$('phoneTime').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable()}if(state&&state.rest)renderRest()},1000);
+setInterval(()=>{if(state&&!state.finished&&!state.awaitingServe){$('clock').textContent=elapsed();$('phoneTime').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable()}if(state&&state.rest)renderRest();updateScoreboardClock()},1000);
 })();
 </script></body></html>
