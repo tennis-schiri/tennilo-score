@@ -567,7 +567,7 @@
 .scoreboard-controls button{display:grid;place-items:center;min-width:28px;height:26px;border-radius:7px;border:1px solid #527185;background:#183044;color:#eef8ff;font-size:15px;line-height:1;cursor:pointer}
 .scoreboard-controls button:focus-visible{outline:2px solid #bcf75c;outline-offset:2px}
 .scoreboard-main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:3px;padding:1px 9px 4px}
-.scoreboard-grid{display:grid;grid-template-columns:minmax(0,2.15fr) repeat(var(--sb-sets),minmax(0,.8fr)) minmax(0,.8fr) minmax(0,1.17fr);gap:3px;align-items:stretch;width:100%;min-width:0}
+.scoreboard-grid{display:grid;grid-template-columns:minmax(0,2.15fr) repeat(var(--sb-sets),minmax(0,.8fr)) minmax(0,1.17fr);gap:3px;align-items:stretch;width:100%;min-width:0}
 .scoreboard-grid-head{flex:0 0 auto;min-height:17px;align-items:center;color:#8faec1;text-transform:uppercase;font-size:clamp(7px,.85vw,10px);letter-spacing:.03em;font-weight:900;text-align:center}
 .scoreboard-grid-head span:first-child{text-align:left;padding-left:8px}
 .scoreboard-row{flex:1 1 0;min-height:0;border:1px solid #3a556b;border-left:4px solid var(--sb-team-color);border-radius:8px;background:#12263a;align-items:stretch}
@@ -640,6 +640,48 @@
 .phone-insights-card .match-stats{margin:0;padding:3px 0 5px;border:0;background:transparent;box-shadow:none}
 .phone-insights-card .match-stats h4{margin-bottom:11px}
 .phone-insights-card .history{max-height:305px;overflow-y:auto;overscroll-behavior:contain}
+
+/* Korrigierte geräteweite Querformat-Vorschau: der komplette Handy-Rahmen dreht. */
+.phone .phone-scoreboard-open{width:auto;min-width:64px;padding:0 6px;white-space:nowrap;font-size:10px;letter-spacing:.015em}
+.phone.is-scoreboard{
+ width:100%;max-width:100%;aspect-ratio:16/9;height:auto;min-height:0;
+ padding:0!important;border:6px solid #48546a;border-radius:27px;
+ background:#071321;overflow:hidden;
+ transform-origin:50% 50%;animation:phone-turn-landscape .65s cubic-bezier(.2,.8,.22,1) both;
+}
+.phone.scoreboard-returning{
+ transform-origin:50% 50%;animation:phone-turn-portrait .65s cubic-bezier(.2,.8,.22,1) both
+}
+@keyframes phone-turn-landscape{
+ 0%{transform:rotate(-90deg) scale(.56);opacity:.85}
+ 70%{transform:rotate(4deg) scale(.99);opacity:1}
+ 100%{transform:rotate(0deg) scale(1);opacity:1}
+}
+@keyframes phone-turn-portrait{
+ 0%{transform:rotate(90deg) scale(.58);opacity:.85}
+ 70%{transform:rotate(-3deg) scale(1);opacity:1}
+ 100%{transform:none;opacity:1}
+}
+.phone.is-scoreboard>.demo-splash,
+.phone.is-scoreboard>.phone-top,
+.phone.is-scoreboard>.phone-device-tabs,
+.phone.is-scoreboard>.phone-menu,
+.phone.is-scoreboard>.phone-live-score,
+.phone.is-scoreboard>.view{display:none!important}
+.phone.is-scoreboard>.phone-scoreboard-screen{display:flex!important;inset:0;position:absolute;z-index:36}
+.phone.is-scoreboard:fullscreen,
+.phone.is-scoreboard.scoreboard-immersive{
+ position:fixed;inset:0;z-index:9999;
+ width:100vw;width:100dvw;height:100vh;height:100dvh;
+ max-width:none;min-height:0;aspect-ratio:auto;border:0;border-radius:0;
+ animation:none;transform:none
+}
+@media(orientation:landscape) and (max-height:650px) and (pointer:coarse){
+ .phone.is-scoreboard{position:fixed;inset:0;z-index:9999;width:100vw;width:100dvw;height:100vh;height:100dvh;max-width:none;aspect-ratio:auto;border:0;border-radius:0;animation:none;transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .phone.is-scoreboard,.phone.scoreboard-returning{animation:none!important;transform:none!important}
+}
 </style></head><body>
 <!-- Transparenter Umriss des Original-Logos: nur Außenfläche entfernen, Originalgrafik unverändert lassen. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden">
@@ -766,14 +808,14 @@
     <button type="button" class="watch-menu-action wm-cancel" ><span class="wm-lang" data-de="Abbrechen" data-en="Cancel">Abbrechen</span><span aria-hidden="true">›</span></button>
   </div>
 </div><div class="watch-menu-toast" id="status" aria-live="polite"></div></div></div></section>
-<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-scoreboard-screen hidden" id="phoneScoreboard" aria-label="TENNILO Scoreboard im Querformat" role="region">
+<section class="panel"><h2>Smartphone-Vorschau · iOS & Android</h2><div class="eyebrow">Einstellungen und Match-Verlauf ohne unnötige Menüs.</div><div class="phone" id="phone"><div class="demo-splash" id="phoneSplash" aria-label="TENNILO Score startet"><div class="splash-orbit"><span></span><span></span></div><div class="splash-brand-motion"><img class="splash-brand" alt="TENNILO Score" width="1361" height="390" decoding="async"></div><div class="splash-loading"><span></span></div><small>READY · SET · PLAY</small></div><div class="phone-scoreboard-screen hidden" id="phoneScoreboard" aria-label="TENNILO Scoreboard im Querformat" aria-hidden="true" role="region">
  <div class="scoreboard-top"><div class="scoreboard-brand"><span class="scoreboard-brand-mark" aria-hidden="true"></span><div><strong>TENNILO SCORE</strong><small>LIVE SCOREBOARD</small></div></div>
  <div class="scoreboard-top-right"><span class="scoreboard-phase" id="sbPhase">SATZ 1 · SPIEL 1</span><span class="scoreboard-status" id="sbStatus">VORBEREITUNG</span><div class="scoreboard-controls">
  <button type="button" id="phoneScoreboardFullscreen" aria-label="Scoreboard als Vollbild anzeigen" title="Vollbild">⛶</button><button type="button" id="phoneScoreboardClose" aria-label="Scoreboard schließen" title="Zurück zur Handy-Ansicht">✕</button></div></div></div>
  <div class="scoreboard-main" id="sbGrid" aria-live="off"></div>
  <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbServeCaption">Aufschlag</small><strong class="scoreboard-serve" id="sbServe">–</strong></div><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
 </div>
-<div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Querformat-Scoreboard öffnen" aria-label="Querformat-Scoreboard öffnen">⛶</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
+<div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Scoreboard im Querformat öffnen" aria-label="Scoreboard im Querformat öffnen" aria-controls="phoneScoreboard" aria-expanded="false">⛶ Board</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
 <nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button></nav>
 <div class="phone-menu hidden" id="phoneMenu" role="dialog" aria-modal="true" aria-labelledby="phoneMenuTitle">
  <div class="phone-menu-head"><button type="button" id="phoneMenuBack" aria-label="Zurück">‹</button><strong id="phoneMenuTitle">Menü</strong><button type="button" id="phoneMenuClose" aria-label="Schließen">✕</button></div>
@@ -2114,7 +2156,7 @@ function renderLandscapeScoreboard(){
  const serving=scoreboardServingPlayer();
  const labels=['<span>'+(en?'PLAYER / TEAM':'SPIELER / TEAM')+'</span>']
   .concat(Array.from({length:cols},(_,i)=>'<span>'+(en?'SET ':'SATZ ')+(i+1)+'</span>'))
-  .concat(['<span>'+(en?'GAMES':'SPIELE')+'</span>','<span>'+(en?'POINTS':'PUNKTE')+'</span>']).join('');
+  .concat(['<span>'+(en?'POINTS':'PUNKTE')+'</span>']).join('');
  const header='<div class="scoreboard-grid scoreboard-grid-head" style="--sb-sets:'+cols+'">'+labels+'</div>';
  const rows=[0,1].map(team=>{
   const names=config.mode==='double'
@@ -2127,12 +2169,11 @@ function renderLandscapeScoreboard(){
    const cls=complete?(complete[team]>complete[1-team]?' won':' lost'):'';
    return '<span class="scoreboard-set'+cls+'">'+esc(value)+(tb===null?'':'<sup>'+esc(tb)+'</sup>')+'</span>';
   }).join('');
-  const games=state.awaitingServe||state.finished?'–':state.games[team];
   const points=state.awaitingServe||state.finished?'–':displayPoints()[team];
   const winner=state.finished&&state.winner===team?' is-winner':'';
   return '<div class="scoreboard-grid scoreboard-row team-'+(team===0?'a':'b')+winner+'" style="--sb-sets:'+cols+'" role="row">'
    +'<div class="scoreboard-player" role="rowheader">'+names+'</div>'+setCells
-   +'<span class="scoreboard-games">'+esc(games)+'</span><span class="scoreboard-points">'+esc(points)+'</span></div>';
+   +'<span class="scoreboard-points">'+esc(points)+'</span></div>';
  }).join('');
  $('sbGrid').innerHTML=header+rows;
  const phase=state.finished?(en?'MATCH FINISHED':'MATCH BEENDET'):
@@ -2147,29 +2188,55 @@ function renderLandscapeScoreboard(){
  $('sbServe').textContent=serving.team>=0?'🎾 '+serving.name:'–';
  updateScoreboardClock();
 }
+let scoreboardReturnTimer=null;
 function setPhoneScoreboard(open){
- const phone=$('phone');
- const screen=$('phoneScoreboard');
- phone.classList.toggle('is-scoreboard',open);
- screen.classList.toggle('hidden',!open);
- $('phoneScoreboardOpen').setAttribute('aria-expanded',String(open));
+ const phone=$('phone'),screen=$('phoneScoreboard'),trigger=$('phoneScoreboardOpen');
+ clearTimeout(scoreboardReturnTimer);
  if(open){
   if(!$('phoneMenu').classList.contains('hidden'))closePhoneMenu();
+  phone.classList.remove('scoreboard-returning');
+  phone.classList.remove('scoreboard-immersive');
   phone.scrollTop=0;
+  screen.classList.remove('hidden');
+  screen.setAttribute('aria-hidden','false');
+  phone.classList.add('is-scoreboard');
+  trigger.setAttribute('aria-expanded','true');
   renderLandscapeScoreboard();
- }else if(document.fullscreenElement===phone&&document.exitFullscreen){
-  document.exitFullscreen().catch(()=>{});
+ }else{
+  phone.classList.remove('is-scoreboard','scoreboard-immersive');
+  screen.classList.add('hidden');
+  screen.setAttribute('aria-hidden','true');
+  trigger.setAttribute('aria-expanded','false');
+  phone.classList.remove('scoreboard-returning');
+  void phone.offsetWidth;
+  phone.classList.add('scoreboard-returning');
+  scoreboardReturnTimer=setTimeout(()=>phone.classList.remove('scoreboard-returning'),650);
+  if(document.fullscreenElement===phone&&document.exitFullscreen){
+   document.exitFullscreen().catch(()=>{});
+  }
  }
 }
 $('phoneScoreboardOpen').addEventListener('click',()=>setPhoneScoreboard(true));
 $('phoneScoreboardClose').addEventListener('click',()=>setPhoneScoreboard(false));
 $('phoneScoreboardFullscreen').addEventListener('click',()=>{
  const phone=$('phone');
- if(document.fullscreenElement){
+ if(document.fullscreenElement===phone){
   if(document.exitFullscreen)document.exitFullscreen().catch(()=>{});
- }else if(phone.requestFullscreen)phone.requestFullscreen().catch(()=>{});
+  return;
+ }
+ if(phone.classList.contains('scoreboard-immersive')){
+  phone.classList.remove('scoreboard-immersive');
+  return;
+ }
+ if(phone.requestFullscreen){
+  phone.requestFullscreen().catch(()=>phone.classList.add('scoreboard-immersive'));
+ }else{
+  phone.classList.add('scoreboard-immersive');
+ }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false)});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&$('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false)
+});
 
 function switchPhoneInsights(mode){
  const history=mode==='history';
