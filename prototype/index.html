@@ -627,6 +627,19 @@
  .phone.is-scoreboard .scoreboard-points{font-size:clamp(31px,6vw,68px)}
 }
 
+
+/* Zwei Hauptbereiche, innerhalb von Match eine eigene Statistik/Verlauf-Karte. */
+.phone .phone-device-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.phone-insights-card{min-width:0;padding:10px;border:1px solid #3b5971;background:#101e30;border-radius:15px;margin:14px 0}
+.phone-insights-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;background:#0b1929;border:1px solid #35536b;border-radius:11px;margin-bottom:12px}
+.phone-insights-tabs button{min-height:37px;min-width:0;border:1px solid transparent;border-radius:8px;background:transparent;color:#b3cbda;font-size:12px;font-weight:900;cursor:pointer}
+.phone-insights-tabs button.active{color:#10221b;background:#bcf75c;border-color:#bcf75c}
+.phone-insights-tabs button:focus-visible{outline:2px solid #7fd6f8;outline-offset:1px}
+.phone-insights-pane.hidden{display:none!important}
+.phone-insights-pane h4{font-size:13px;font-weight:900;color:#e8f5ff;margin:0 0 10px}
+.phone-insights-card .match-stats{margin:0;padding:3px 0 5px;border:0;background:transparent;box-shadow:none}
+.phone-insights-card .match-stats h4{margin-bottom:11px}
+.phone-insights-card .history{max-height:305px;overflow-y:auto;overscroll-behavior:contain}
 </style></head><body>
 <!-- Transparenter Umriss des Original-Logos: nur Außenfläche entfernen, Originalgrafik unverändert lassen. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden">
@@ -761,7 +774,7 @@
  <div class="scoreboard-bottom"><div class="scoreboard-foot-item"><small id="sbServeCaption">Aufschlag</small><strong class="scoreboard-serve" id="sbServe">–</strong></div><div class="scoreboard-foot-item"><small id="sbDurationCaption">Spieldauer</small><strong class="scoreboard-duration" id="sbDuration">00:00</strong></div></div>
 </div>
 <div class="phone-top"><span>TENNILO SCORE</span><div class="phone-top-actions"><button class="phone-scoreboard-open" id="phoneScoreboardOpen" type="button" title="Querformat-Scoreboard öffnen" aria-label="Querformat-Scoreboard öffnen">⛶</button><button id="phoneLangToggle" class="phone-lang" type="button" aria-label="Sprache wechseln">DE / EN</button><button id="phoneMenuGear" class="phone-gear" type="button" aria-label="Smartphone-Menü öffnen" aria-haspopup="dialog" aria-controls="phoneMenu" aria-expanded="false" title="Menü">⚙</button></div></div>
-<nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button><button class="tab" type="button" data-tab="history">Verlauf</button></nav>
+<nav class="device-tabs phone-device-tabs" aria-label="Smartphone-Navigation"><button class="tab active" type="button" data-tab="settings">Einstellungen</button><button class="tab" type="button" data-tab="match">Match</button></nav>
 <div class="phone-menu hidden" id="phoneMenu" role="dialog" aria-modal="true" aria-labelledby="phoneMenuTitle">
  <div class="phone-menu-head"><button type="button" id="phoneMenuBack" aria-label="Zurück">‹</button><strong id="phoneMenuTitle">Menü</strong><button type="button" id="phoneMenuClose" aria-label="Schließen">✕</button></div>
  <div class="phone-menu-content" id="phoneMenuContent"></div><p class="phone-menu-error hidden" id="phoneMenuError" role="alert"></p>
@@ -830,8 +843,19 @@
 <div class="field"><label for="deuce">Bei Einstand</label><select id="deuce"><option value="adv">Vorteil</option><option value="noad" selected>No-Ad</option></select></div>
 <div class="field"><label for="tbEnds">Seitenwechsel im Tiebreak / Match-Tiebreak</label><select id="tbEnds"><option value="6" selected>Standard · alle 6 Punkte</option><option value="144">ITF-Alternative · 1–4–4 (nach 1, 5, 9 …)</option></select></div></div>
 <button class="btn primary" id="apply" style="width:100%">Match mit diesen Einstellungen starten</button><p class="note" style="margin-top:10px">Die benötigten Einstellungen erscheinen passend zur Spielart. Neue Einstellungen starten ein neues Match.</p></div>
-<div class="view hidden" id="view-match"><h3>Aktuelles Match</h3><div class="summary"><div class="label">MATCHDETAILS</div><div class="line"><span>Aktuelles Spiel</span><strong id="phonePoints">0 : 0</strong></div><div class="line"><span>Aufschlag</span><strong id="phoneServe">Ich</strong></div><div class="line"><span>Rückschlag / Positionen</span><strong id="phoneReturn">–</strong></div><div class="line"><span>Spielzeit</span><strong id="phoneTime">00:00</strong></div></div><section class="match-stats"><h4>Match-Statistiken <span class="stats-live">LIVE</span></h4><div class="match-stats-content" id="matchStats" aria-live="polite"></div><p class="note">Aus den gezählten Punkten berechnet. Aufschlagquote, Asse und Fehler benötigen später eine separate Erfassung.</p></section><button class="btn" id="phoneUndo">Letzten Punkt rückgängig</button><p class="note" style="margin-top:13px">Die Match-Zählung erfolgt in der Watch-Vorschau links bzw. oben.</p></div>
-<div class="view hidden" id="view-history"><h3>Punkt für Punkt</h3><div id="historySetTabs" class="history-set-tabs" aria-label="Satz auswählen"></div><div class="history" id="historyList"><p>Noch keine Punkte eingetragen.</p></div><p class="note" style="margin-top:12px">Der Verlauf liegt nur in diesem Browser. Dies ist noch keine Synchronisierung.</p></div></div></section></main>
+<div class="view hidden" id="view-match">
+<h3>Match</h3>
+<div class="summary"><div class="label">MATCHDETAILS</div><div class="line"><span>Aktuelles Spiel</span><strong id="phonePoints">0 : 0</strong></div><div class="line"><span>Aufschlag</span><strong id="phoneServe">Ich</strong></div><div class="line"><span>Rückschlag / Positionen</span><strong id="phoneReturn">–</strong></div><div class="line"><span>Spielzeit</span><strong id="phoneTime">00:00</strong></div></div>
+<section class="phone-insights-card" aria-label="Match-Statistik und Matchverlauf">
+<div class="phone-insights-tabs" role="tablist" aria-label="Match-Informationen">
+<button id="phoneInsightsStats" type="button" role="tab" aria-controls="phoneStatsPane" aria-selected="true" class="active" data-insight="stats">Statistik</button>
+<button id="phoneInsightsHistory" type="button" role="tab" aria-controls="phoneHistoryPane" aria-selected="false" data-insight="history">Verlauf</button>
+</div>
+<div id="phoneStatsPane" class="phone-insights-pane" role="tabpanel" aria-labelledby="phoneInsightsStats"><section class="match-stats"><h4>Match-Statistiken <span class="stats-live">LIVE</span></h4><div class="match-stats-content" id="matchStats" aria-live="polite"></div><p class="note">Aus den gezählten Punkten berechnet. Aufschlagquote, Asse und Fehler benötigen später eine separate Erfassung.</p></section></div>
+<div id="phoneHistoryPane" class="phone-insights-pane hidden" role="tabpanel" aria-labelledby="phoneInsightsHistory"><h4>Punkt für Punkt</h4><div id="historySetTabs" class="history-set-tabs" aria-label="Satz auswählen"></div><div class="history" id="historyList"><p>Noch keine Punkte eingetragen.</p></div><p class="note" style="margin-top:12px">Der Verlauf liegt nur in diesem Browser. Dies ist noch keine Synchronisierung.</p></div>
+</section>
+<button class="btn" id="phoneUndo">Letzten Punkt rückgängig</button><p class="note" style="margin-top:13px">Die Match-Zählung erfolgt in der Watch-Vorschau links bzw. oben.</p></div>
+</div></div></section></main>
 <div class="instruction"><b>Was dieser Prototyp schon kann:</b> reguläre Tenniszählung inklusive Vorteil/No-Ad, Watch-interne Doppel-Aufstellung und Mixed-Entscheidungspunkt, farbige Satzstände, Tiebreak-Anzeige, Seitenwechsel-Hinweise und Watch-Rückgängig, Spiel- und Satzwechsel, Tiebreak (bei 6:6 bzw. 4:4), Match-Tiebreak im Entscheidungssatz, Aufschlagwechsel, Rückgängig, korrigierbaren aktuellen Spielstand und Matchverlauf. <b>Noch nicht umgesetzt:</b> native Watch-App, echtes Offline-Speichern, Hardware-Tasten, Haptik und Watch/Handy-Synchronisierung.</div><div class="footer">TENNILO Score · Produkt- und Bedienkonzept, kein veröffentlichter App-Build</div></div>
 <div class="modal-bg hidden" id="modal"><div class="modal" role="dialog" aria-modal="true"><h3>Spielstand korrigieren</h3><p style="margin-bottom:16px">Aktuelles Spiel und Aufschlag direkt einstellen. Die vorherige Historie bleibt als Prototyp bestehen.</p><div class="two"><div class="field"><label>Spiele A</label><input id="fixGamesA" type="number" min="0" max="20"></div><div class="field"><label>Spiele B</label><input id="fixGamesB" type="number" min="0" max="20"></div></div><div class="two"><div class="field"><label>Punkte A</label><select id="fixPointsA"><option value="0">0</option><option value="1">15</option><option value="2">30</option><option value="3">40</option><option value="4">Vorteil</option></select></div><div class="field"><label>Punkte B</label><select id="fixPointsB"><option value="0">0</option><option value="1">15</option><option value="2">30</option><option value="3">40</option><option value="4">Vorteil</option></select></div></div><div class="field"><label>Aufschlag</label><select id="fixServe"><option value="0">Spieler A</option><option value="1">Spieler B</option></select></div><p class="note">Für fortgeschrittene Korrekturen (Sätze/Tiebreak) folgt eine eigene Ansicht.</p><div class="actions"><button class="btn" id="cancelFix">Abbrechen</button><button class="btn primary" id="saveFix">Übernehmen</button></div></div></div>
 <script>
@@ -1357,7 +1381,7 @@ function renderHistory(){
  const retirementNote=retirementActive()&&active===state.completed.length?
   '<div class="history-retirement-note">RET · Aufgabe: '+esc(teamDisplayName(state.retiredBy))+' · Sieger durch Aufgabe: '+esc(teamDisplayName(state.winner))+' · '+esc(retirementScore())+'</div>':'';
  $('historyList').innerHTML=body+pendingGame+retirementNote;
- if(!$('view-history').classList.contains('hidden')&&currentSet)scrollHistoryToCurrent();
+ if(!$('view-match').classList.contains('hidden')&&!$('phoneHistoryPane').classList.contains('hidden')&&currentSet)scrollHistoryToCurrent();
 }
 function scrollHistoryToCurrent(){
  const list=$('historyList'),target=list.querySelector('[data-history-current="true"]');
@@ -2147,16 +2171,31 @@ $('phoneScoreboardFullscreen').addEventListener('click',()=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false)});
 
-function switchTab(t){
- if($('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false);
- document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
- document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t));
- if(t==='history'){
-  $('phone').scrollTop=0;
+function switchPhoneInsights(mode){
+ const history=mode==='history';
+ $('phoneStatsPane').classList.toggle('hidden',history);
+ $('phoneHistoryPane').classList.toggle('hidden',!history);
+ for(const tab of $('view-match').querySelectorAll('[data-insight]')){
+  const active=tab.dataset.insight===(history?'history':'stats');
+  tab.classList.toggle('active',active);
+  tab.setAttribute('aria-selected',String(active));
+ }
+ if(history){
   selectedHistorySet=null;
   renderHistory();
-  scrollHistoryToCurrent();
+  if(!$('view-match').classList.contains('hidden'))scrollHistoryToCurrent();
  }
+}
+$('view-match').querySelector('.phone-insights-tabs').addEventListener('click',e=>{
+ const button=e.target.closest('[data-insight]');
+ if(button)switchPhoneInsights(button.dataset.insight);
+});
+function switchTab(t){
+ if($('phone').classList.contains('is-scoreboard'))setPhoneScoreboard(false);
+ if(t==='history'){t='match';switchPhoneInsights('history');}
+ document.querySelectorAll('.phone-device-tabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
+ document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!=='view-'+t));
+ if(t==='match'&&!$('phoneHistoryPane').classList.contains('hidden'))scrollHistoryToCurrent();
 }
 function modeFields(){
  const doubles=$('mode').value!=='single',mixed=$('mode').value==='mixed';
