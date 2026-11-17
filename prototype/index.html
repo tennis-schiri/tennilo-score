@@ -597,6 +597,18 @@
  .scoreboard-foot-item strong{font-size:10px}
 }
 @media(max-width:400px){.scoreboard-phase{font-size:8px}.scoreboard-player .scoreboard-player-name{font-size:9px}.scoreboard-bottom{gap:4px}.scoreboard-foot-item strong{font-size:9px}}
+/* Beim real gedrehten Handy fuellt die Tafel ohne Browser-Vollbildberechtigung den Bildschirm. */
+@media(orientation:landscape) and (max-height:650px) and (pointer:coarse){
+ .phone.is-scoreboard{position:fixed;inset:0;z-index:999;width:100vw;width:100dvw;height:100vh;height:100dvh;max-width:none;min-height:0;aspect-ratio:auto;border:0;border-radius:0}
+ .phone.is-scoreboard .scoreboard-top{padding:8px 15px 5px}
+ .phone.is-scoreboard .scoreboard-main{padding:3px 12px 5px;gap:4px}
+ .phone.is-scoreboard .scoreboard-bottom{padding:6px 15px 8px}
+ .phone.is-scoreboard .scoreboard-player .scoreboard-player-name{font-size:clamp(13px,2.2vw,23px)}
+ .phone.is-scoreboard .scoreboard-set{font-size:clamp(20px,3.5vw,38px)}
+ .phone.is-scoreboard .scoreboard-games{font-size:clamp(23px,4.4vw,48px)}
+ .phone.is-scoreboard .scoreboard-points{font-size:clamp(31px,6vw,68px)}
+}
+
 </style></head><body>
 <!-- Transparenter Umriss des Original-Logos: nur Außenfläche entfernen, Originalgrafik unverändert lassen. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden">
@@ -1094,6 +1106,7 @@ function setDemoLanguage(next){
  if(typeof watchMenuLang==='function')watchMenuLang();
  if(typeof refreshPhoneMenu==='function'&&phoneMenuOpen)refreshPhoneMenu();
  if(typeof updatePhoneLiveLabels==='function')updatePhoneLiveLabels();
+ if(typeof renderLandscapeScoreboard==='function')renderLandscapeScoreboard();
 }
 function toggleDemoLanguage(){setDemoLanguage(demoLang==='de'?'en':'de')}
 
