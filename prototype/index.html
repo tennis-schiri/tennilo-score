@@ -1317,7 +1317,7 @@ function initConfig(){config={mode:$('mode').value==='single'?'single':'double',
 const ARCHIVE_DB_NAME='tennilo-score-matches',ARCHIVE_DB_VERSION=1;
 let archiveDB=null,archiveReady=false,archiveUnavailable=false;
 let archiveRecords=[],archiveSelectedId=null,archiveDetailView='overview';
-let archiveSaveQueue=Promise.resolve(),archiveEarlyScoring=false;
+let archiveSaveQueue=Promise.resolve(),archiveEarlyScoring=false,lastArchiveCheckpoint=0;
 function makeMatchId(){
  return 'score-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,11);
 }
@@ -1372,6 +1372,7 @@ function archiveSnapshot(){
 function persistCurrentMatch(){
  if(!archiveReady||!archiveDB||!state||state.awaitingServe)return;
  const snapshot=archiveSnapshot();
+ lastArchiveCheckpoint=snapshot.updatedAt;
  archiveSaveQueue=archiveSaveQueue.catch(()=>{}).then(()=>archiveCommit(snapshot));
  archiveSaveQueue.catch(err=>{
   console.warn('TENNILO Score: Match konnte nicht gespeichert werden',err);
@@ -1430,7 +1431,7 @@ async function initializeOfflineArchive(){
    archiveDBRequest('settings','currentMatch')
   ]);
   archiveRecords=(records||[]).sort((a,b)=>b.updatedAt-a.updatedAt);
-  const choice=archiveRecords.find(x=>x.id===(pointer&&pointer.value))||archiveRecords[0];
+  const choice=pointer&&pointer.value?archiveRecords.find(x=>x.id===pointer.value):null;
   if(choice&&!archiveEarlyScoring)restoreArchiveRecord(choice);
   archiveReady=true;
   if(archiveEarlyScoring)persistCurrentMatch();
@@ -2716,6 +2717,8 @@ function startSplashAnimation(){
 Promise.all(splashLogos.map(img=>typeof img.decode==='function'?img.decode().catch(()=>{}):Promise.resolve())).then(startSplashAnimation);
 setTimeout(startSplashAnimation,2500);
 document.querySelectorAll('.demo-splash').forEach(el=>el.addEventListener('click',()=>el.classList.add('hidden')));
-setInterval(()=>{if(state&&!state.finished&&!state.awaitingServe){$('clock').textContent=elapsed();$('phoneTime').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable()}if(state&&state.rest)renderRest();updateScoreboardClock()},1000);
+setInterval(()=>{if(state&&!state.finished&&!state.awaitingServe){$('clock').textContent=elapsed();$('phoneTime').textContent=elapsed();$('phoneScoreTable').innerHTML=phoneScoreTable();if(archiveReady&&Date.now()-lastArchiveCheckpoint>30000)persistCurrentMatch()}if(state&&state.rest)renderRest();updateScoreboardClock()},1000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persistCurrentMatch()});
+window.addEventListener('pagehide',()=>persistCurrentMatch());
 })();
 </script></body></html>
