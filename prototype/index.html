@@ -702,6 +702,7 @@
 .archive-controls{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin:10px 0}
 .archive-controls input,.archive-controls select{width:100%;min-width:0;min-height:38px;border:1px solid #415d73;background:#132a3c;color:#ebf7ff;border-radius:9px;padding:8px 10px;font-size:12px}
 .archive-list{display:flex;flex-direction:column;gap:9px;margin:12px 0}
+.archive-import-button{width:100%;border-style:dashed;background:#183247;color:#cfedff}
 .archive-match{display:block;width:100%;padding:12px 10px;background:#122a3d;border:1px solid #466077;border-left:4px solid #8bcde4;color:#f1f9ff;border-radius:12px;text-align:left}
 .archive-match:focus-visible,.archive-action:focus-visible{outline:2px solid #bcf75c;outline-offset:2px}
 .archive-match.active-match{border-left-color:#bcf75c}
@@ -945,7 +946,7 @@
  <h3>Match-Archiv</h3>
  <p class="archive-info" id="archiveStorageStatus" role="status">Lokale Matches werden geladen …</p>
  <div class="archive-controls"><input id="archiveSearch" type="search" placeholder="Spieler oder Team suchen" aria-label="Match-Archiv durchsuchen">
- <select id="archiveFilter" aria-label="Matches filtern"><option value="all">Alle Matches</option><option value="finished">Abgeschlossen</option><option value="ongoing">Fortsetzbar</option></select></div>
+ <select id="archiveFilter" aria-label="Matches filtern"><option value="all">Alle Matches</option><option value="finished">Abgeschlossen</option><option value="ongoing">Fortsetzbar</option></select><button type="button" class="archive-action archive-import-button" id="archiveImportTrigger">JSON-Backup importieren</button><input id="archiveImport" class="hidden" type="file" accept=".json,application/json" aria-label="Match-Backup importieren"></div>
  <div id="archiveList" class="archive-list" aria-live="polite"><p class="note">Lade Match-Archiv …</p></div>
  <div id="archiveDetail" class="archive-detail hidden" aria-live="polite"></div>
 </div>
@@ -1088,6 +1089,8 @@ const DEMO_TRANSLATIONS = [
  ['Fortsetzbar','Resumable'],
  ['Lokale Matches werden geladen …','Loading local matches …'],
  ['Lade Match-Archiv …','Loading match history …'],
+ ['JSON-Backup importieren','Import JSON backup'],
+ ['Match-Backup importieren','Import match backup'],
  ['Tippe direkt auf die Seite des Spielers, der den Punkt gewinnt.','Tap the side of the player who wins the point.'],
  ['Simulation der Watch-Bedienung im Browser. Kein echtes WatchOS.','Watch simulation in your browser. Not actual watchOS.'],
  ['Zählen. Ohne nachzudenken.','Score. Without thinking.'],
@@ -1562,6 +1565,51 @@ function renderArchiveDetail(rec){
     (en?['Overview','Statistics','Live Log'][i]:['Übersicht','Statistik','Live-Verlauf'][i])+'</button>').join('')+
   '</div>'+content;
 }
+function validateImportRecord(data){
+ if(!data||data.format!=='TENNILO-Score-Match-v1'||data.schemaVersion!==1||
+  !data.config||!['single','double'].includes(data.config.mode)||
+  !Array.isArray(data.config.names)||data.config.names.length!==2||
+  !data.config.names.every(name=>typeof name==='string'&&name.length<=100)||
+  !Array.isArray(data.config.partners)||data.config.partners.length!==2||
+  !data.config.partners.every(name=>typeof name==='string'&&name.length<=100)||
+  !data.state||!Array.isArray(data.state.games)||data.state.games.length!==2||
+  !Array.isArray(data.state.points)||data.state.points.length!==2||
+  !Array.isArray(data.events)||data.events.length>100000){
+  throw new Error('Ungültiges TENNILO-Score-Match-Backup');
+ }
+ return {
+  ...data,id:makeMatchId(),schemaVersion:1,
+  createdAt:Number(data.createdAt)||Date.now(),
+  matchDateAt:Number(data.matchDateAt)||Number(data.startedAt)||Date.now(),
+  startedAt:Number(data.startedAt)||Date.now(),
+  updatedAt:Date.now(),
+  endedAt:Number(data.endedAt)||null,
+  status:archiveStatusOf({state:data.state}),
+  config:clone(data.config),state:clone(data.state),
+  events:clone(data.events),undo:clone(Array.isArray(data.undo)?data.undo.slice(-80):[])
+ };
+}
+$('archiveImportTrigger').addEventListener('click',()=>$('archiveImport').click());
+$('archiveImport').addEventListener('change',async ()=>{
+ const input=$('archiveImport'),file=input.files&&input.files[0];input.value='';
+ if(!file)return;
+ try{
+  if(!archiveReady||!archiveDB)throw new Error('Lokale Speicherung nicht verfügbar');
+  if(file.size>15*1024*1024)throw new Error('Backup-Datei ist zu groß');
+  const data=JSON.parse(await file.text());
+  const match=validateImportRecord(data);
+  await archiveSaveQueue.catch(()=>{});
+  await archiveCommit(match,false);
+  $('archiveStorageStatus').textContent=demoLang==='en'?
+   'Backup imported successfully and saved offline.':
+   'Backup importiert und offline gespeichert.';
+  await refreshArchiveList();
+ }catch(err){
+  $('archiveStorageStatus').textContent=demoLang==='en'?
+   'Import failed: '+String(err.message||err):
+   'Import fehlgeschlagen: '+String(err.message||err);
+ }
+});
 function exportArchiveRecord(rec){
  const data=JSON.stringify({format:'TENNILO-Score-Match-v1',...rec},null,2);
  const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
