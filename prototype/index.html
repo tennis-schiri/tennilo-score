@@ -1299,6 +1299,309 @@ function nameOf(key){if(!key)return '–';const [t,i]=key.split(':').map(Number)
 function teamOf(key){return Number(key.split(':')[0])}
 function otherTeam(t){return 1-t}
 function initConfig(){config={mode:$('mode').value==='single'?'single':'double',mixed:$('mode').value==='mixed',men:[$('genderplayerA').value==='m'?0:1,$('genderplayerB').value==='m'?0:1],sets:Number($('sets').value),games:Number($('games').value),deuce:$('deuce').value,finalset:$('finalset').value,tb:Number($('tiebreakTarget').value),tbEnds:$('tbEnds').value,names:[$('playerA').value.trim()||'Ich',$('playerB').value.trim()||'Gegner'],partners:[$('partnerA').value.trim()||'Partner',$('partnerB').value.trim()||'Gegner 2']}}
+
+/* Offline-first match archive. One IndexedDB record per match, including scoring state,
+   undo snapshots and every point. All writes are serialized to avoid stale overwrites. */
+const ARCHIVE_DB_NAME='tennilo-score-matches',ARCHIVE_DB_VERSION=1;
+let archiveDB=null,archiveReady=false,archiveUnavailable=false;
+let archiveRecords=[],archiveSelectedId=null,archiveDetailView='overview';
+let archiveSaveQueue=Promise.resolve(),archiveEarlyScoring=false;
+function makeMatchId(){
+ return 'score-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,11);
+}
+let currentMatchId=makeMatchId(),currentMatchCreatedAt=Date.now();
+function openArchiveDatabase(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)){reject(new Error('IndexedDB nicht verfügbar'));return}
+  const req=indexedDB.open(ARCHIVE_DB_NAME,ARCHIVE_DB_VERSION);
+  req.onupgradeneeded=()=>{
+   const db=req.result;
+   if(!db.objectStoreNames.contains('matches')){
+    const store=db.createObjectStore('matches',{keyPath:'id'});
+    store.createIndex('updatedAt','updatedAt');
+   }
+   if(!db.objectStoreNames.contains('settings'))db.createObjectStore('settings',{keyPath:'key'});
+  };
+  req.onsuccess=()=>{req.result.onversionchange=()=>req.result.close();resolve(req.result)};
+  req.onerror=()=>reject(req.error||new Error('Datenbank konnte nicht geöffnet werden'));
+  req.onblocked=()=>reject(new Error('Datenbank-Update durch weiteren Tab blockiert'));
+ });
+}
+function archiveDBRequest(store,key){
+ return new Promise((resolve,reject)=>{
+  const tx=archiveDB.transaction(store,'readonly');
+  const request=key===undefined?tx.objectStore(store).getAll():tx.objectStore(store).get(key);
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error||new Error('Lesefehler'));
+ });
+}
+function archiveCommit(record,setActive=true){
+ return new Promise((resolve,reject)=>{
+  const tx=archiveDB.transaction(['matches','settings'],'readwrite');
+  tx.objectStore('matches').put(record);
+  if(setActive)tx.objectStore('settings').put({key:'currentMatch',value:record.id});
+  tx.oncomplete=resolve;
+  tx.onerror=()=>reject(tx.error||new Error('Speichern fehlgeschlagen'));
+  tx.onabort=()=>reject(tx.error||new Error('Speichern abgebrochen'));
+ });
+}
+function archiveStatusOf(match){
+ if(match.state.finished)return match.state.finishReason==='retirement'?'retired':'finished';
+ return 'ongoing';
+}
+function archiveSnapshot(){
+ return {
+  id:currentMatchId,schemaVersion:1,createdAt:currentMatchCreatedAt,
+  startedAt:started,updatedAt:Date.now(),
+  endedAt:state.matchEndedAt||null,status:archiveStatusOf({state}),
+  config:clone(config),state:clone(state),events:clone(events),undo:clone(undo.slice(-80))
+ };
+}
+function persistCurrentMatch(){
+ if(!archiveReady||!archiveDB||!state||state.awaitingServe)return;
+ const snapshot=archiveSnapshot();
+ archiveSaveQueue=archiveSaveQueue.catch(()=>{}).then(()=>archiveCommit(snapshot));
+ archiveSaveQueue.catch(err=>{
+  console.warn('TENNILO Score: Match konnte nicht gespeichert werden',err);
+  if($('archiveStorageStatus'))$('archiveStorageStatus').textContent=demoLang==='en'?
+   'Local saving failed. Check browser storage settings.':
+   'Lokales Speichern fehlgeschlagen. Bitte Browserspeicher prüfen.';
+ });
+}
+function applyArchiveConfig(saved){
+ const mode=saved.mode==='single'?'single':saved.mixed?'mixed':'double';
+ const fields={
+  mode,playerA:saved.names[0],playerB:saved.names[1],
+  partnerA:saved.partners[0],partnerB:saved.partners[1],
+  sets:saved.sets,games:saved.games,tiebreakTarget:saved.tb,
+  deuce:saved.deuce,finalset:saved.finalset,tbEnds:saved.tbEnds||'6'
+ };
+ for(const [id,value] of Object.entries(fields))if($(id)&&value!==undefined)$(id).value=value;
+ $('genderplayerA').value=saved.men[0]===0?'m':'w';
+ $('genderplayerB').value=saved.men[1]===0?'m':'w';
+ $('genderpartnerA').value=saved.men[0]===0?'w':'m';
+ $('genderpartnerB').value=saved.men[1]===0?'w':'m';
+ modeFields();
+ renderPhoneGenderSelections();
+ syncPhoneToWatch();
+}
+function restoreArchiveRecord(record){
+ if(!record||!record.config||!record.state)return;
+ currentMatchId=record.id;
+ currentMatchCreatedAt=record.createdAt||record.startedAt||Date.now();
+ config=clone(record.config);
+ state=clone(record.state);
+ events=clone(record.events||[]);
+ undo=clone(record.undo||[]);
+ started=record.startedAt||Date.now();
+ // Time spent with the app closed must not inflate the match clock.
+ if(!state.finished){
+  const gap=Math.max(0,Date.now()-(record.updatedAt||Date.now()));
+  started+=gap;
+  if(state.setStartedAt)state.setStartedAt+=gap;
+  for(const item of undo)if(item.state&&item.state.setStartedAt)item.state.setStartedAt+=gap;
+  state.rest=null;state.decisionBanner=null;
+ }
+ clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);
+ selectedHistorySet=null;
+ watchConfigOpen=false;
+ applyArchiveConfig(config);
+ render();
+ switchTab('match');
+}
+async function initializeOfflineArchive(){
+ try{
+  archiveDB=await openArchiveDatabase();
+  const [records,pointer]=await Promise.all([
+   archiveDBRequest('matches'),
+   archiveDBRequest('settings','currentMatch')
+  ]);
+  archiveRecords=(records||[]).sort((a,b)=>b.updatedAt-a.updatedAt);
+  const choice=archiveRecords.find(x=>x.id===(pointer&&pointer.value))||archiveRecords[0];
+  if(choice&&!archiveEarlyScoring)restoreArchiveRecord(choice);
+  archiveReady=true;
+  if(archiveEarlyScoring)persistCurrentMatch();
+  $('archiveStorageStatus').textContent=demoLang==='en'?
+   'Stored offline on this device. No cloud sync yet.':
+   'Offline auf diesem Gerät gespeichert. Noch keine Cloud-Synchronisierung.';
+  renderArchiveList();
+ }catch(err){
+  archiveUnavailable=true;
+  $('archiveStorageStatus').textContent=demoLang==='en'?
+   'Offline storage unavailable in this browser. Matches will not survive a reload.':
+   'Offline-Speicherung in diesem Browser nicht verfügbar. Matches gehen beim Neuladen verloren.';
+  $('archiveList').innerHTML='<p class="note">'+esc(String(err.message||err))+'</p>';
+ }
+}
+async function refreshArchiveList(){
+ if(!archiveReady)return;
+ try{
+  await archiveSaveQueue.catch(()=>{});
+  archiveRecords=(await archiveDBRequest('matches')).sort((a,b)=>b.updatedAt-a.updatedAt);
+  renderArchiveList();
+ }catch(err){
+  $('archiveStorageStatus').textContent=String(err.message||err);
+ }
+}
+function archiveTeamName(saved,team){
+ return saved.mode==='double'?saved.names[team]+' / '+saved.partners[team]:saved.names[team];
+}
+function archiveScoreRows(rec){
+ const completed=rec.state.completed||[];
+ const pairs=[0,1].map(team=>{
+  const scores=completed.map((set,i)=>set[team]+(rec.state.completedTB&&rec.state.completedTB[i]==='mtb'?' MTB':'')).join(' · ');
+  const ongoing=rec.status==='ongoing'?(rec.state.mtb?rec.state.points[team]:rec.state.games[team]):null;
+  return (scores||'–')+(ongoing!==null?' · '+ongoing:'');
+ });
+ return pairs;
+}
+function archiveDate(timestamp){
+ return new Date(timestamp||Date.now()).toLocaleDateString(demoLang==='en'?'en-GB':'de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function renderArchiveList(){
+ if(!archiveReady)return;
+ const query=$('archiveSearch').value.trim().toLocaleLowerCase();
+ const filter=$('archiveFilter').value;
+ const matches=archiveRecords.filter(m=>{
+  if(filter==='finished'&&m.status==='ongoing')return false;
+  if(filter==='ongoing'&&m.status!=='ongoing')return false;
+  return !query||[...m.config.names,...m.config.partners].join(' ').toLocaleLowerCase().includes(query);
+ });
+ if(!matches.length){
+  $('archiveList').innerHTML='<p class="note">'+(demoLang==='en'?'No saved matches found.':'Keine gespeicherten Matches gefunden.')+'</p>';
+ }else{
+  $('archiveList').innerHTML=matches.map(rec=>{
+   const current=rec.id===currentMatchId;
+   const status=rec.status==='retired'?(demoLang==='en'?'Retirement':'Aufgabe'):
+    rec.status==='finished'?(demoLang==='en'?'Finished':'Beendet'):
+    current?(demoLang==='en'?'Current':'Aktuell'):(demoLang==='en'?'Resume':'Fortsetzbar');
+   const score=archiveScoreRows(rec);
+   const wins=rec.state.winner;
+   const start=rec.startedAt||rec.createdAt;
+   return '<button type="button" class="archive-match'+(current?' active-match':'')+'" data-archive-open="'+esc(rec.id)+'">'+
+    '<span class="archive-head"><span>'+archiveDate(start)+' · '+(rec.config.mixed?'Mixed':rec.config.mode==='double'?'Doppel':'Einzel')+'</span>'+
+    '<span class="archive-tag'+(rec.status!=='ongoing'?' finished':'')+'">'+status+'</span></span>'+
+    [0,1].map(team=>'<span class="archive-team'+(wins===team?' winner':'')+'"><span>'+esc(archiveTeamName(rec.config,team))+'</span><strong>'+esc(score[team])+'</strong></span>').join('')+
+    '<span class="archive-foot"><span>'+esc(rec.status==='ongoing'?'● LIVE / OFFLINE':rec.state.finishReason==='retirement'?'RET':'MATCH')+'</span><span>Details ›</span></span>'+
+    '</button>';
+  }).join('');
+ }
+ if(archiveSelectedId){
+  const record=archiveRecords.find(x=>x.id===archiveSelectedId);
+  if(record)renderArchiveDetail(record);
+  else{$('archiveDetail').classList.add('hidden');archiveSelectedId=null}
+ }
+}
+function archiveStats(rec){
+ const points=[0,0],serve=[0,0],returnPoints=[0,0],breaks=[0,0];
+ for(const e of rec.events||[]){
+  const d=e.details;
+  if(!d||!Number.isInteger(d.pointWinner))continue;
+  const winner=d.pointWinner;points[winner]++;
+  if(d.serverTeam===winner)serve[winner]++;else returnPoints[winner]++;
+  if(d.gameEnd&&!d.tb&&d.serverTeam!==winner)breaks[winner]++;
+ }
+ return {points,serve,returnPoints,breaks};
+}
+function archiveLog(rec){
+ const scored=(rec.events||[]).filter(e=>e.details&&Number.isInteger(e.details.pointWinner)).reverse();
+ if(!scored.length)return '<p class="note">'+(demoLang==='en'?'No recorded points yet.':'Noch keine Punkte erfasst.')+'</p>';
+ return '<div class="archive-event-list">'+scored.map((event,index)=>{
+  const d=event.details,who=archiveTeamName(rec.config,d.pointWinner);
+  const phase=(demoLang==='en'?'Set ':'Satz ')+(d.setIndex+1)+' · '+(demoLang==='en'?'Game ':'Spiel ')+(d.gameIndex+1);
+  const score=(d.gameEnd?(d.setEnd?(d.matchEnd?' · MATCH':' · SATZ'):' · SPIEL'):'')+
+   (d.after?' · '+d.after:'');
+  return '<div class="archive-event"><strong>#'+(index+1)+' · '+esc(who)+'</strong>'+
+   '<small>'+esc(phase+score)+' · '+esc(event.time||'')+'</small></div>';
+ }).join('')+'</div>';
+}
+function renderArchiveDetail(rec){
+ const pane=$('archiveDetail');pane.classList.remove('hidden');
+ const en=demoLang==='en',score=archiveScoreRows(rec);
+ const stats=archiveStats(rec);
+ const isOngoing=rec.status==='ongoing';
+ const durationEnd=rec.endedAt||rec.updatedAt||Date.now();
+ const duration=formatDuration(Math.max(0,durationEnd-(rec.startedAt||durationEnd)));
+ let content='';
+ if(archiveDetailView==='overview'){
+  content='<h5>'+(en?'Result':'Ergebnis')+'</h5>'+
+   [0,1].map(team=>'<p class="archive-detail-result">'+esc(archiveTeamName(rec.config,team))+' · '+esc(score[team])+'</p>').join('')+
+   '<div class="archive-statline">'+(en?'Started':'Beginn')+': '+archiveDate(rec.startedAt||rec.createdAt)+'</div>'+
+   '<div class="archive-statline">'+(en?'Match time (until last save)':'Spieldauer (bis zur letzten Speicherung)')+': '+duration+'</div>'+
+   '<div class="archive-statline">'+(en?'Status':'Status')+': '+(isOngoing?(en?'Ongoing / resumable':'Fortsetzbar'):rec.status==='retired'?(en?'Retirement':'Aufgabe'):(en?'Finished':'Abgeschlossen'))+'</div>';
+ }else if(archiveDetailView==='stats'){
+  content='<h5>'+(en?'Statistics':'Statistik')+'</h5>'+
+   [{name:en?'Points won':'Gewonnene Punkte',val:stats.points},
+    {name:en?'Service points won':'Gewonnene Aufschlagpunkte',val:stats.serve},
+    {name:en?'Return points won':'Gewonnene Returnpunkte',val:stats.returnPoints},
+    {name:en?'Breaks won':'Gewonnene Breaks',val:stats.breaks}].map(v=>
+    '<div class="archive-statline">'+v.name+': <strong>'+v.val.join(' : ')+'</strong></div>').join('');
+ }else content='<h5>'+(en?'Live Log · Point by point':'Live-Verlauf · Punkt für Punkt')+'</h5>'+archiveLog(rec);
+ pane.innerHTML='<h4>'+esc(archiveTeamName(rec.config,0))+' – '+esc(archiveTeamName(rec.config,1))+'</h4>'+
+  '<div class="archive-detail-actions">'+
+  '<button type="button" class="archive-action" data-archive-close>'+(en?'Back':'Zurück')+'</button>'+
+  (isOngoing?'<button type="button" class="archive-action primary" data-archive-resume="'+esc(rec.id)+'">'+(rec.id===currentMatchId?(en?'Return to match':'Zum Match'):(en?'Resume match':'Match fortsetzen'))+'</button>':'')+
+  '<button type="button" class="archive-action" data-archive-export="'+esc(rec.id)+'">JSON</button>'+
+  '<button type="button" class="archive-action" data-archive-delete="'+esc(rec.id)+'">'+(en?'Delete':'Löschen')+'</button></div>'+
+  '<div class="phone-insights-tabs">'+
+   ['overview','stats','log'].map((view,i)=>'<button type="button" class="'+(archiveDetailView===view?'active':'')+'" data-archive-view="'+view+'">'+
+    (en?['Overview','Statistics','Live Log'][i]:['Übersicht','Statistik','Live-Verlauf'][i])+'</button>').join('')+
+  '</div>'+content;
+}
+function exportArchiveRecord(rec){
+ const data=JSON.stringify({format:'TENNILO-Score-Match-v1',...rec},null,2);
+ const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+ const link=document.createElement('a');link.href=url;link.download='tennilo-score-'+rec.id+'.json';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+async function deleteArchivedMatch(id){
+ const rec=archiveRecords.find(r=>r.id===id);if(!rec||!archiveDB)return;
+ const question=demoLang==='en'?'Delete this match permanently from this device?':
+  'Dieses Match endgültig von diesem Gerät löschen?';
+ if(!confirm(question))return;
+ await archiveSaveQueue.catch(()=>{});
+ await new Promise((resolve,reject)=>{
+  const tx=archiveDB.transaction(['matches','settings'],'readwrite');
+  tx.objectStore('matches').delete(id);
+  if(id===currentMatchId)tx.objectStore('settings').delete('currentMatch');
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Löschen fehlgeschlagen'));
+ });
+ if(id===currentMatchId){watchConfigOpen=true;fresh()}
+ archiveSelectedId=null;$('archiveDetail').classList.add('hidden');
+ await refreshArchiveList();
+}
+async function resumeArchivedMatch(id){
+ if(id===currentMatchId){switchTab('match');return}
+ await archiveSaveQueue.catch(()=>{});
+ const record=await archiveDBRequest('matches',id);
+ if(!record)return;
+ if(record.status!=='ongoing')return;
+ restoreArchiveRecord(record);
+ persistCurrentMatch();
+ await refreshArchiveList();
+}
+$('archiveSearch').addEventListener('input',renderArchiveList);
+$('archiveFilter').addEventListener('change',renderArchiveList);
+$('view-archive').addEventListener('click',async e=>{
+ const button=e.target.closest('button');if(!button)return;
+ try{
+  if(button.hasAttribute('data-archive-close')){archiveSelectedId=null;$('archiveDetail').classList.add('hidden');return}
+  if(button.hasAttribute('data-archive-view')){
+   archiveDetailView=button.dataset.archiveView;
+   const rec=archiveRecords.find(x=>x.id===archiveSelectedId);
+   if(rec)renderArchiveDetail(rec);
+  }else if(button.hasAttribute('data-archive-open')){
+   archiveSelectedId=button.dataset.archiveOpen;archiveDetailView='overview';
+   const rec=archiveRecords.find(x=>x.id===archiveSelectedId);if(rec)renderArchiveDetail(rec);
+   $('archiveDetail').scrollIntoView({block:'nearest',behavior:'smooth'});
+  }else if(button.hasAttribute('data-archive-resume'))await resumeArchivedMatch(button.dataset.archiveResume);
+  else if(button.hasAttribute('data-archive-export')){
+   const rec=archiveRecords.find(x=>x.id===button.dataset.archiveExport);if(rec)exportArchiveRecord(rec);
+  }else if(button.hasAttribute('data-archive-delete'))await deleteArchivedMatch(button.dataset.archiveDelete);
+ }catch(err){$('archiveStorageStatus').textContent=String(err.message||err)}
+});
+
 function fresh(){state={sets:[0,0],completed:[],completedTB:[],games:[0,0],points:[0,0],server:0,awaitingServe:true,tb:false,mtb:false,finished:false,winner:null,pointCount:0,sideChange:false,tbFirstServer:null,serveOrder:[],receiveDeuce:[null,null],setupCount:0,setupPending:false,tbStart:0,deuceCount:0,setBallCount:[0,0],matchBallCount:[0,0],rest:null,setStartedAt:null,setDurations:[],matchEndedAt:null,finishDismissed:false,decisionBanner:null,finishReason:null,retiredBy:null};clearTimeout(restBannerTimer);clearTimeout(decisionBannerTimer);undo=[];events=[];selectedHistorySet=null;started=Date.now();render()}
 function chooseFirstServe(team){
  if(!state||!state.awaitingServe)return;
