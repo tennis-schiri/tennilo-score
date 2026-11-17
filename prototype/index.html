@@ -1621,7 +1621,7 @@ function chooseFirstServe(team){
  if(!archiveReady)archiveEarlyScoring=true;
  state.server=team;state.awaitingServe=false;
  started=Date.now();firstServeAt=started;state.setStartedAt=started;
- event(config.mode='double'?'Match gestartet · Erstes Aufschlagteam: '+teamDisplayName(team):
+ event(config.mode==='double'?'Match gestartet · Erstes Aufschlagteam: '+teamDisplayName(team):
   'Match gestartet · Erster Aufschlag: '+config.names[team]);
  if(config.mode==='double')requestSetup();
  render();
